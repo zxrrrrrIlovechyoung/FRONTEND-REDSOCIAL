@@ -23,4 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
+# Local environment files with secrets (never commit)
 .env
+.env.*
+!.env.example
