@@ -585,12 +585,33 @@ pre {
   font-weight: 800;
 }
 
+.post-image-wrap {
+  position: relative;
+  overflow: hidden;
+  background: #f1f5f9;
+  cursor: pointer;
+}
+
 .post-image {
   display: block;
   width: 100%;
   aspect-ratio: 4 / 5;
   object-fit: cover;
   background: #f1f5f9;
+}
+
+.double-like-heart {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.55);
+  color: rgba(255, 255, 255, .94);
+  font-size: 92px;
+  line-height: 1;
+  text-shadow: 0 12px 35px rgba(15, 23, 42, .28);
+  pointer-events: none;
+  animation: doubleHeart .72s ease-out;
 }
 
 .post-actions {
@@ -610,6 +631,24 @@ pre {
   color: #111827;
   font-size: 24px;
   line-height: 1;
+}
+
+.post-actions button.liked {
+  color: #e11d48;
+  animation: likedPop .24s ease-out;
+}
+
+@keyframes doubleHeart {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.55); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
+  45% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.35); }
+}
+
+@keyframes likedPop {
+  0% { transform: scale(.8); }
+  70% { transform: scale(1.18); }
+  100% { transform: scale(1); }
 }
 
 .post-body {

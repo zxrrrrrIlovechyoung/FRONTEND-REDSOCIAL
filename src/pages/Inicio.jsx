@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
 
@@ -49,6 +50,28 @@ const publicaciones = [
 ]
 
 export default function Inicio() {
+  const [likesActivos, setLikesActivos] = useState({})
+  const [corazonesAnimados, setCorazonesAnimados] = useState({})
+
+  const animarCorazon = (id) => {
+    setCorazonesAnimados((actual) => ({ ...actual, [id]: (actual[id] || 0) + 1 }))
+  }
+
+  const alternarLike = (id) => {
+    setLikesActivos((actual) => ({ ...actual, [id]: !actual[id] }))
+    animarCorazon(id)
+  }
+
+  const darLikeConDobleClick = (id) => {
+    setLikesActivos((actual) => ({ ...actual, [id]: true }))
+    animarCorazon(id)
+  }
+
+  const totalLikes = (likes, activo) => {
+    const total = Number(likes.replace(/,/g, '')) + (activo ? 1 : 0)
+    return total.toLocaleString('en-US')
+  }
+
   return (
     <main className="app-shell">
       <AppSidebar activo="Inicio" />
@@ -85,11 +108,20 @@ export default function Inicio() {
                 <button className="more-btn" aria-label="Mas opciones">•••</button>
               </header>
 
-              <img className="post-image" src={post.imagen} alt={`Momento compartido por ${post.autor}`} />
+              <div className="post-image-wrap" onDoubleClick={() => darLikeConDobleClick(post.id)}>
+                <img className="post-image" src={post.imagen} alt={`Momento compartido por ${post.autor}`} />
+                <span className="double-like-heart" key={corazonesAnimados[post.id] || 0}>♥</span>
+              </div>
 
               <div className="post-actions">
                 <div>
-                  <button aria-label="Me gusta">♡</button>
+                  <button
+                    className={likesActivos[post.id] ? 'liked' : ''}
+                    aria-label={likesActivos[post.id] ? 'Quitar me gusta' : 'Me gusta'}
+                    onClick={() => alternarLike(post.id)}
+                  >
+                    {likesActivos[post.id] ? '♥' : '♡'}
+                  </button>
                   <button aria-label="Comentar">☰</button>
                   <button aria-label="Enviar">✉</button>
                 </div>
@@ -97,7 +129,7 @@ export default function Inicio() {
               </div>
 
               <div className="post-body">
-                <strong>{post.likes} me gusta</strong>
+                <strong>{totalLikes(post.likes, likesActivos[post.id])} me gusta</strong>
                 <p><span>{post.usuario}</span> {post.pensamiento}</p>
                 <button className="comments-btn">Ver {post.comentarios} comentarios</button>
               </div>
