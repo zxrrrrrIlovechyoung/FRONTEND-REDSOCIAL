@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import CampoPassword from '../components/CampoPassword'
 
 export default function Login() {
   const { login, estaAutenticado } = useAuth()
   const navigate = useNavigate()
-  const mensajeRegistro = useLocation().state?.mensaje
   const [form, setForm] = useState({ usuarioOEmail: '', password: '' })
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -31,10 +30,13 @@ export default function Login() {
   return (
     <main className="auth">
       <div className="card">
-        <h1 className="card-titulo">Bienvenido</h1>
-        <p className="card-sub">Inicia sesión con tus credenciales</p>
+        <div className="auth-brand">
+          <span className="brand-mark">M</span>
+          <strong>Moment</strong>
+        </div>
 
-        {mensajeRegistro && <p className="aviso-exito">{mensajeRegistro}</p>}
+        <h1 className="card-titulo">Bienvenido</h1>
+        <p className="card-sub">Vuelve a tus momentos, chats y pensamientos favoritos.</p>
 
         <form onSubmit={onSubmit}>
           <div className="campo">
