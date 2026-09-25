@@ -515,6 +515,118 @@ pre {
   font-size: 12px;
 }
 
+.story-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: rgba(15, 23, 42, .42);
+}
+
+.story-modal {
+  width: min(460px, 100vw);
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, .28);
+}
+
+.story-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.story-modal-head > button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #f8fafc;
+  color: #111827;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.story-modal-media {
+  position: relative;
+  min-height: 0;
+  background: #111827;
+}
+
+.story-modal-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.story-modal-media p {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 42px 18px 18px;
+  background: linear-gradient(transparent, rgba(15, 23, 42, .78));
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.story-modal-actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.story-modal-actions button {
+  border: 0;
+  border-radius: 7px;
+  background: #111827;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.story-modal-actions button:first-child {
+  padding: 9px 10px;
+  background: transparent;
+  color: #111827;
+}
+
+.story-modal-actions button:first-child.liked {
+  color: #e11d48;
+}
+
+.story-modal-actions button:last-child {
+  padding: 10px 12px;
+}
+
+.story-modal-actions input {
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  outline: none;
+  font: inherit;
+  font-size: 13px;
+}
+
 .post-list {
   display: grid;
   gap: 24px;

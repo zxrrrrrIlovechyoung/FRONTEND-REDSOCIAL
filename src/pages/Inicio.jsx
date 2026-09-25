@@ -49,9 +49,71 @@ const publicaciones = [
   },
 ]
 
+const estados = [
+  ...publicaciones,
+  {
+    id: 5,
+    autor: 'Sofia Marin',
+    usuario: '@sofia.m',
+    avatar: 'SM',
+    tiempo: 'Hace 3 h',
+    imagen: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80',
+    pensamiento: 'A veces una buena platica arregla mas que cualquier plan perfecto.',
+    likes: '512',
+  },
+  {
+    id: 6,
+    autor: 'Andres Vega',
+    usuario: '@andresv',
+    avatar: 'AV',
+    tiempo: 'Hace 4 h',
+    imagen: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80',
+    pensamiento: 'Hoy avance poquito, pero avance. Tambien cuenta.',
+    likes: '389',
+  },
+  {
+    id: 7,
+    autor: 'Lucia Gomez',
+    usuario: '@luciag',
+    avatar: 'LG',
+    tiempo: 'Hace 5 h',
+    imagen: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80',
+    pensamiento: 'Cielo bonito, audifonos puestos y cero prisa.',
+    likes: '841',
+  },
+  {
+    id: 8,
+    autor: 'Grupo 5A',
+    usuario: '@grupo.5a',
+    avatar: '5A',
+    tiempo: 'Hace 6 h',
+    imagen: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80',
+    pensamiento: 'Sobrevivimos otra semana de proyecto. Eso merece foto.',
+    likes: '1,006',
+  },
+]
+
 export default function Inicio() {
   const [likesActivos, setLikesActivos] = useState({})
   const [corazonesAnimados, setCorazonesAnimados] = useState({})
+  const [estadoAbierto, setEstadoAbierto] = useState(null)
+  const [crearAbierto, setCrearAbierto] = useState(false)
+  const [tipoMomento, setTipoMomento] = useState('foto')
+  const [previewMomento, setPreviewMomento] = useState('')
+  const [textoMomento, setTextoMomento] = useState('')
+
+  const seleccionarArchivo = (e) => {
+    const archivo = e.target.files?.[0]
+    if (!archivo) return
+    setPreviewMomento(URL.createObjectURL(archivo))
+  }
+
+  const cerrarCrearMomento = () => {
+    setCrearAbierto(false)
+    setPreviewMomento('')
+    setTextoMomento('')
+    setTipoMomento('foto')
+  }
 
   const animarCorazon = (id) => {
     setCorazonesAnimados((actual) => ({ ...actual, [id]: (actual[id] || 0) + 1 }))
@@ -82,12 +144,12 @@ export default function Inicio() {
             <p className="feed-kicker">Hoy en tu escuela</p>
             <h1>Momentos recientes</h1>
           </div>
-          <button className="compose-btn">Compartir</button>
+          <button className="compose-btn" onClick={() => setCrearAbierto(true)}>Compartir</button>
         </div>
 
         <div className="stories" aria-label="Historias">
-          {publicaciones.map((post) => (
-            <button className="story" key={post.id}>
+          {estados.map((post) => (
+            <button className="story" key={post.id} onClick={() => setEstadoAbierto(post)}>
               <span>{post.avatar}</span>
               <small>{post.autor.split(' ')[0]}</small>
             </button>
@@ -137,6 +199,97 @@ export default function Inicio() {
           ))}
         </div>
       </section>
+
+      {estadoAbierto && (
+        <div className="story-viewer" role="presentation" onClick={() => setEstadoAbierto(null)}>
+          <section className="story-modal" role="dialog" aria-modal="true" aria-label={`Momento de ${estadoAbierto.autor}`} onClick={(e) => e.stopPropagation()}>
+            <header className="story-modal-head">
+              <div className="author">
+                <div className="author-avatar">{estadoAbierto.avatar}</div>
+                <div>
+                  <strong>{estadoAbierto.autor}</strong>
+                  <span>{estadoAbierto.usuario} · {estadoAbierto.tiempo}</span>
+                </div>
+              </div>
+              <button onClick={() => setEstadoAbierto(null)} aria-label="Cerrar momento">×</button>
+            </header>
+
+            <div className="story-modal-media">
+              <img src={estadoAbierto.imagen} alt={`Momento compartido por ${estadoAbierto.autor}`} />
+              <p>{estadoAbierto.pensamiento}</p>
+            </div>
+
+            <div className="story-modal-actions">
+              <button
+                className={likesActivos[`estado-${estadoAbierto.id}`] ? 'liked' : ''}
+                onClick={() => alternarLike(`estado-${estadoAbierto.id}`)}
+              >
+                {likesActivos[`estado-${estadoAbierto.id}`] ? '♥' : '♡'} Me gusta
+              </button>
+              <input placeholder={`Responder a ${estadoAbierto.autor.split(' ')[0]} en privado...`} />
+              <button>Enviar</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {crearAbierto && (
+        <div className="create-moment-backdrop" role="presentation" onClick={cerrarCrearMomento}>
+          <section className="create-moment" role="dialog" aria-modal="true" aria-label="Crear momento" onClick={(e) => e.stopPropagation()}>
+            <header className="create-moment-head">
+              <div>
+                <p className="feed-kicker">Nuevo momento</p>
+                <h2>Compartir algo</h2>
+              </div>
+              <button onClick={cerrarCrearMomento} aria-label="Cerrar creador">×</button>
+            </header>
+
+            <div className="moment-type-tabs">
+              {['foto', 'video', 'texto'].map((tipo) => (
+                <button
+                  className={tipoMomento === tipo ? 'activo' : ''}
+                  key={tipo}
+                  onClick={() => {
+                    setTipoMomento(tipo)
+                    setPreviewMomento('')
+                  }}
+                >
+                  {tipo}
+                </button>
+              ))}
+            </div>
+
+            {tipoMomento !== 'texto' ? (
+              <label className="moment-upload">
+                <input type="file" accept={tipoMomento === 'foto' ? 'image/*' : 'video/*'} onChange={seleccionarArchivo} hidden />
+                {previewMomento ? (
+                  tipoMomento === 'foto'
+                    ? <img src={previewMomento} alt="Vista previa del momento" />
+                    : <video src={previewMomento} controls />
+                ) : (
+                  <span>{tipoMomento === 'foto' ? 'Subir foto' : 'Subir video'}</span>
+                )}
+              </label>
+            ) : (
+              <div className="text-moment-preview">
+                {textoMomento || 'Escribe un pensamiento para compartirlo como momento.'}
+              </div>
+            )}
+
+            <textarea
+              value={textoMomento}
+              onChange={(e) => setTextoMomento(e.target.value)}
+              placeholder={tipoMomento === 'texto' ? '¿Qué estás pensando?' : 'Agrega un mensaje para este momento...'}
+              maxLength={180}
+            />
+
+            <div className="create-moment-actions">
+              <small>{textoMomento.length}/180</small>
+              <button onClick={cerrarCrearMomento}>Publicar momento</button>
+            </div>
+          </section>
+        </div>
+      )}
 
       <MessagesWidget />
     </main>

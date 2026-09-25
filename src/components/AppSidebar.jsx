@@ -47,7 +47,11 @@ export default function AppSidebar({ activo = 'Inicio' }) {
 
             return item.ruta === '#'
               ? (
-                <button className={`nav-item${activo === item.texto ? ' activo' : ''}`} key={item.texto}>
+                <button
+                  className={`nav-item${activo === item.texto ? ' activo' : ''}`}
+                  key={item.texto}
+                  onClick={() => item.texto === 'Crear' && window.dispatchEvent(new Event('abrir-crear-momento'))}
+                >
                   {contenido}
                 </button>
               )
