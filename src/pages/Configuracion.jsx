@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppSidebar from '../components/AppSidebar'
-import MessagesWidget from '../components/MessagesWidget'
 import { useAuth } from '../context/AuthContext'
 
 const ajustes = [
@@ -11,10 +10,20 @@ const ajustes = [
   { titulo: 'Seguridad', descripcion: 'Contrasena, sesiones activas y proteccion de la cuenta.' },
 ]
 
+const opcionesCuenta = [
+  { id: 'password', titulo: 'Cambiar contraseña', descripcion: 'Actualiza la contraseña con la que entras a Moment.', tono: 'normal' },
+  { id: 'desactivar', titulo: 'Desactivar cuenta', descripcion: 'Oculta temporalmente tu perfil y tus momentos.', tono: 'warning' },
+  { id: 'eliminar', titulo: 'Eliminar cuenta', descripcion: 'Borra tu cuenta y la informacion asociada de forma permanente.', tono: 'danger' },
+]
+
 export default function Configuracion() {
   const { logout } = useAuth()
   const navigate = useNavigate()
   const [confirmarSalida, setConfirmarSalida] = useState(false)
+  const [cuentaAbierta, setCuentaAbierta] = useState(true)
+  const [detalle, setDetalle] = useState('')
+
+  const opcionActiva = opcionesCuenta.find((opcion) => opcion.id === detalle)
 
   const cerrarSesion = () => {
     logout()
@@ -32,25 +41,111 @@ export default function Configuracion() {
           <span>Administra como se ve, se protege y se comporta tu experiencia en Moment.</span>
         </header>
 
-        <div className="settings-list">
-          {ajustes.map((ajuste) => (
-            <button className="settings-row" key={ajuste.titulo}>
-              <span>
-                <strong>{ajuste.titulo}</strong>
-                <small>{ajuste.descripcion}</small>
-              </span>
-              <i>›</i>
-            </button>
-          ))}
-        </div>
-
-        <section className="logout-section">
+        <div className={`settings-layout${detalle ? ' con-detalle' : ''}`}>
           <div>
-            <strong>Cerrar sesion</strong>
-            <p>Sal de tu cuenta en este dispositivo.</p>
+            <div className={`settings-master ${detalle ? 'detail-mode' : ''}`}>
+              {!detalle ? (
+                <div className="settings-list settings-main-list">
+                  {ajustes.map((ajuste) => (
+                    <div className="settings-item" key={ajuste.titulo}>
+                      <button
+                        className="settings-row"
+                        onClick={ajuste.titulo === 'Cuenta' ? () => setCuentaAbierta((valor) => !valor) : undefined}
+                      >
+                        <span>
+                          <strong>{ajuste.titulo}</strong>
+                          <small>{ajuste.descripcion}</small>
+                        </span>
+                        <i>{ajuste.titulo === 'Cuenta' && cuentaAbierta ? '⌄' : '›'}</i>
+                      </button>
+
+                      {ajuste.titulo === 'Cuenta' && (
+                        <div className={`account-options${cuentaAbierta ? ' abierto' : ''}`}>
+                          <div className="account-options-inner">
+                            {opcionesCuenta.map((opcion) => (
+                              <button
+                                className={`account-option ${opcion.tono}`}
+                                key={opcion.id}
+                                onClick={() => setDetalle(opcion.id)}
+                              >
+                                <span>
+                                  <strong>{opcion.titulo}</strong>
+                                  <small>{opcion.descripcion}</small>
+                                </span>
+                                <i>›</i>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="settings-subdetail-card">
+                  <button className="back-row" onClick={() => setDetalle('')}>‹ Volver a configuracion</button>
+                  <p className="feed-kicker">Cuenta</p>
+                  <h3>{opcionActiva?.titulo}</h3>
+                  <span>{opcionActiva?.descripcion}</span>
+                </div>
+              )}
+            </div>
+
+            {!detalle && (
+              <section className="logout-section">
+                <div>
+                  <strong>Cerrar sesion</strong>
+                  <p>Sal de tu cuenta en este dispositivo.</p>
+                </div>
+                <button className="danger-btn" onClick={() => setConfirmarSalida(true)}>Cerrar sesion</button>
+              </section>
+            )}
           </div>
-          <button className="danger-btn" onClick={() => setConfirmarSalida(true)}>Cerrar sesion</button>
-        </section>
+
+          {detalle && (
+          <section className="settings-detail" aria-label="Detalle de configuracion">
+            {detalle === 'password' && (
+              <>
+                <p className="feed-kicker">Cuenta</p>
+                <h2>Cambiar contraseña</h2>
+                <p className="detail-copy">Actualiza tu contraseña. Por ahora esta vista es estatica para validar el flujo.</p>
+                <div className="detail-form">
+                  <input type="password" placeholder="Contraseña actual" />
+                  <input type="password" placeholder="Nueva contraseña" />
+                  <input type="password" placeholder="Confirmar nueva contraseña" />
+                  <button>Guardar cambios</button>
+                </div>
+              </>
+            )}
+
+            {detalle === 'desactivar' && (
+              <>
+                <p className="feed-kicker">Cuenta</p>
+                <h2>Desactivar cuenta</h2>
+                <p className="detail-copy">Tu perfil quedaria oculto temporalmente y podrias volver cuando inicies sesion de nuevo.</p>
+                <div className="detail-warning">
+                  <strong>Antes de continuar</strong>
+                  <span>Tus momentos no se borran, solo dejan de estar visibles.</span>
+                </div>
+                <button className="warning-btn">Desactivar cuenta</button>
+              </>
+            )}
+
+            {detalle === 'eliminar' && (
+              <>
+                <p className="feed-kicker">Cuenta</p>
+                <h2>Eliminar cuenta</h2>
+                <p className="detail-copy">Esta accion eliminaria tu perfil, momentos, mensajes y preferencias de forma permanente.</p>
+                <div className="detail-warning danger">
+                  <strong>Accion permanente</strong>
+                  <span>Mas adelante agregaremos una confirmacion fuerte antes de permitir esto.</span>
+                </div>
+                <button className="danger-btn">Eliminar cuenta</button>
+              </>
+            )}
+          </section>
+          )}
+        </div>
       </section>
 
       {confirmarSalida && (
@@ -66,7 +161,6 @@ export default function Configuracion() {
         </div>
       )}
 
-      <MessagesWidget />
     </main>
   )
 }

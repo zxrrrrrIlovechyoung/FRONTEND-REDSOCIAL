@@ -1771,7 +1771,7 @@ pre {
 
 .settings-page {
   width: 100%;
-  max-width: 760px;
+  max-width: 980px;
   margin: 0 auto;
   padding: 32px 0 70px;
 }
@@ -1802,7 +1802,28 @@ pre {
 .settings-list {
   display: grid;
   gap: 10px;
+}
+
+.settings-master {
+  animation: settingsSlideIn .22s ease;
+}
+
+.settings-master.detail-mode {
+  animation: settingsSlideIn .22s ease;
+}
+
+.settings-layout {
+  max-width: 760px;
   margin-top: 16px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.settings-layout.con-detalle {
+  max-width: none;
+  display: grid;
+  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+  gap: 16px;
 }
 
 .settings-row,
@@ -1851,6 +1872,77 @@ pre {
   font-size: 22px;
 }
 
+.account-options {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: max-height .24s ease, opacity .18s ease, transform .24s ease;
+}
+
+.account-options.abierto {
+  max-height: 260px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.account-options-inner {
+  margin: 8px 10px 6px 28px;
+  overflow: hidden;
+  border-left: 1px solid #e5e7eb;
+}
+
+.account-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border: 0;
+  background: #fff;
+  color: #111827;
+  text-align: left;
+  cursor: pointer;
+}
+
+.account-option:hover {
+  background: #f8fafc;
+}
+
+.account-option.activo {
+  background: #f8fafc;
+}
+
+.account-option strong,
+.account-option small {
+  display: block;
+}
+
+.account-option strong {
+  font-size: 12.5px;
+}
+
+.account-option small {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 11.5px;
+}
+
+.account-option.warning strong {
+  color: #b45309;
+}
+
+.account-option.danger strong {
+  color: #dc2626;
+}
+
+.account-option i {
+  color: #94a3b8;
+  font-style: normal;
+  font-size: 16px;
+}
+
 .logout-section {
   display: flex;
   align-items: center;
@@ -1858,6 +1950,135 @@ pre {
   gap: 18px;
   margin-top: 22px;
   padding: 18px;
+}
+
+.settings-detail {
+  min-height: 430px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.settings-detail h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.detail-copy {
+  max-width: 460px;
+  margin: 12px 0 22px;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.detail-form {
+  display: grid;
+  gap: 12px;
+  max-width: 360px;
+}
+
+.detail-form input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  outline: none;
+  font: inherit;
+  font-size: 13.5px;
+}
+
+.detail-form input:focus {
+  border-color: #111827;
+}
+
+.detail-form button,
+.warning-btn {
+  justify-self: start;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 7px;
+  background: #111827;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.detail-warning {
+  max-width: 420px;
+  display: grid;
+  gap: 5px;
+  margin-bottom: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #9a3412;
+}
+
+.detail-warning strong {
+  font-size: 13px;
+}
+
+.detail-warning span {
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.detail-warning.danger {
+  color: #b91c1c;
+}
+
+.warning-btn {
+  background: #b45309;
+}
+
+.settings-subdetail-card {
+  min-height: 150px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  animation: settingsSlideIn .22s ease;
+}
+
+.back-row {
+  margin: 0 0 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.settings-subdetail-card h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 18px;
+}
+
+.settings-subdetail-card > span {
+  display: block;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@keyframes settingsSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .logout-section p {
@@ -2004,9 +2225,13 @@ pre {
   }
 
   .settings-page {
-    max-width: min(760px, calc(100vw - 118px));
+    max-width: min(980px, calc(100vw - 118px));
     margin-left: 100px;
     margin-right: 18px;
+  }
+
+  .settings-layout.con-detalle {
+    grid-template-columns: 1fr;
   }
 
   .messages-page {
