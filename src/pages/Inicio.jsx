@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
 
@@ -98,9 +98,10 @@ export default function Inicio() {
   const [corazonesAnimados, setCorazonesAnimados] = useState({})
   const [estadoAbierto, setEstadoAbierto] = useState(null)
   const [crearAbierto, setCrearAbierto] = useState(false)
-  const [tipoMomento, setTipoMomento] = useState('foto')
+  const [tipoMomento, setTipoMomento] = useState('')
   const [previewMomento, setPreviewMomento] = useState('')
   const [textoMomento, setTextoMomento] = useState('')
+  const [linkMomento, setLinkMomento] = useState('')
 
   const seleccionarArchivo = (e) => {
     const archivo = e.target.files?.[0]
@@ -112,8 +113,15 @@ export default function Inicio() {
     setCrearAbierto(false)
     setPreviewMomento('')
     setTextoMomento('')
-    setTipoMomento('foto')
+    setLinkMomento('')
+    setTipoMomento('')
   }
+
+  useEffect(() => {
+    const abrirCrear = () => setCrearAbierto(true)
+    window.addEventListener('abrir-crear-momento', abrirCrear)
+    return () => window.removeEventListener('abrir-crear-momento', abrirCrear)
+  }, [])
 
   const animarCorazon = (id) => {
     setCorazonesAnimados((actual) => ({ ...actual, [id]: (actual[id] || 0) + 1 }))
@@ -244,22 +252,40 @@ export default function Inicio() {
               <button onClick={cerrarCrearMomento} aria-label="Cerrar creador">×</button>
             </header>
 
-            <div className="moment-type-tabs">
-              {['foto', 'video', 'texto'].map((tipo) => (
+            <div className="moment-text-field">
+              <textarea
+                value={textoMomento}
+                onChange={(e) => setTextoMomento(e.target.value)}
+                placeholder="¿Qué quieres compartir?"
+                maxLength={180}
+                required
+              />
+              <small>{textoMomento.length}/180</small>
+            </div>
+
+            <div className="moment-attach-row" aria-label="Agregar adjunto">
+              {[
+                { tipo: 'foto', icono: '▧', label: 'Imagen' },
+                { tipo: 'video', icono: '▷', label: 'Video' },
+                { tipo: 'link', icono: '↗', label: 'Link' },
+              ].map((item) => (
                 <button
-                  className={tipoMomento === tipo ? 'activo' : ''}
-                  key={tipo}
+                  className={tipoMomento === item.tipo ? 'activo' : ''}
+                  key={item.tipo}
                   onClick={() => {
-                    setTipoMomento(tipo)
+                    setTipoMomento(tipoMomento === item.tipo ? '' : item.tipo)
                     setPreviewMomento('')
+                    setLinkMomento('')
                   }}
+                  title={item.label}
+                  type="button"
                 >
-                  {tipo}
+                  <span>{item.icono}</span>
                 </button>
               ))}
             </div>
 
-            {tipoMomento !== 'texto' ? (
+            {(tipoMomento === 'foto' || tipoMomento === 'video') && (
               <label className="moment-upload">
                 <input type="file" accept={tipoMomento === 'foto' ? 'image/*' : 'video/*'} onChange={seleccionarArchivo} hidden />
                 {previewMomento ? (
@@ -270,21 +296,19 @@ export default function Inicio() {
                   <span>{tipoMomento === 'foto' ? 'Subir foto' : 'Subir video'}</span>
                 )}
               </label>
-            ) : (
-              <div className="text-moment-preview">
-                {textoMomento || 'Escribe un pensamiento para compartirlo como momento.'}
+            )}
+
+            {tipoMomento === 'link' && (
+              <div className="moment-link-field">
+                <input
+                  value={linkMomento}
+                  onChange={(e) => setLinkMomento(e.target.value)}
+                  placeholder="Pega un enlace para acompañar tu momento"
+                />
               </div>
             )}
 
-            <textarea
-              value={textoMomento}
-              onChange={(e) => setTextoMomento(e.target.value)}
-              placeholder={tipoMomento === 'texto' ? '¿Qué estás pensando?' : 'Agrega un mensaje para este momento...'}
-              maxLength={180}
-            />
-
             <div className="create-moment-actions">
-              <small>{textoMomento.length}/180</small>
               <button onClick={cerrarCrearMomento}>Publicar momento</button>
             </div>
           </section>

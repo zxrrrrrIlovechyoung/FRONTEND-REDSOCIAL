@@ -10,7 +10,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
 
-  if (estaAutenticado) return <Navigate to="/" replace />
+  if (estaAutenticado) return <Navigate to="/inicio" replace />
 
   const onChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -23,7 +23,7 @@ export default function Login() {
     setCargando(true)
     const resultado = await login(form.usuarioOEmail, form.password)
     setCargando(false)
-    if (resultado.exito) navigate('/')
+    if (resultado.exito) navigate('/inicio')
     else setError(resultado.mensaje)
   }
 

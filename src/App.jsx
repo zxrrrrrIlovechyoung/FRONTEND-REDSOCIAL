@@ -3,25 +3,29 @@ import { AuthProvider } from './context/AuthContext'
 import RutaProtegida from './routes/RutaProtegida'
 import Login from './pages/Login'
 import Registro from './pages/Registro'
+import InicioPublico from './pages/InicioPublico'
 import Inicio from './pages/Inicio'
 import Perfil from './pages/Perfil'
 import Mensajes from './pages/Mensajes'
 import Favoritos from './pages/Favoritos'
 import Configuracion from './pages/Configuracion'
+import Buscar from './pages/Buscar'
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<InicioPublico />} />
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
           <Route element={<RutaProtegida />}>
-            <Route path="/" element={<Inicio />} />
+            <Route path="/inicio" element={<Inicio />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/mensajes" element={<Mensajes />} />
             <Route path="/favoritos" element={<Favoritos />} />
             <Route path="/configuracion" element={<Configuracion />} />
+            <Route path="/buscar" element={<Buscar />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

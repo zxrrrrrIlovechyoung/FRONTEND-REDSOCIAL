@@ -3,8 +3,8 @@ import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 
 const herramientas = [
-  { icono: '⌂', texto: 'Inicio', ruta: '/' },
-  { icono: '⌕', texto: 'Buscar', ruta: '#' },
+  { icono: '⌂', texto: 'Inicio', ruta: '/inicio' },
+  { icono: '⌕', texto: 'Buscar', ruta: '/buscar' },
   { icono: '+', texto: 'Crear', ruta: '#' },
   { icono: '♡', texto: 'Favoritos', ruta: '/favoritos' },
   { icono: '✉', texto: 'Mensajes', ruta: '/mensajes' },
@@ -19,9 +19,9 @@ export default function AppSidebar({ activo = 'Inicio' }) {
     <aside className={`sidebar${sidebarContraido ? ' contraido' : ''}`}>
       <div>
         <div className="sidebar-head">
-          <Link className="brand" to="/">
+          <Link className="brand" to="/inicio">
             <span className="brand-mark">M</span>
-            <span>MyMoment</span>
+            <span>Moment</span>
           </Link>
           <button
             className="sidebar-toggle"
@@ -32,7 +32,7 @@ export default function AppSidebar({ activo = 'Inicio' }) {
           </button>
         </div>
 
-        <Link className="brand brand-compact" to="/">
+        <Link className="brand brand-compact" to="/inicio">
           <span className="brand-mark">M</span>
         </Link>
 

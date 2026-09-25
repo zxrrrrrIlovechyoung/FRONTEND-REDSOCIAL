@@ -29,7 +29,7 @@ export default function Configuracion() {
         <header className="settings-header">
           <p className="feed-kicker">Mi cuenta</p>
           <h1>Configuracion</h1>
-          <span>Administra como se ve, se protege y se comporta tu experiencia en MyMoment.</span>
+          <span>Administra como se ve, se protege y se comporta tu experiencia en Moment.</span>
         </header>
 
         <div className="settings-list">
@@ -57,7 +57,7 @@ export default function Configuracion() {
         <div className="modal-backdrop" role="presentation">
           <section className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="cerrar-sesion-titulo">
             <h2 id="cerrar-sesion-titulo">Cerrar sesion</h2>
-            <p>¿Seguro que quieres cerrar sesion en MyMoment?</p>
+            <p>¿Seguro que quieres cerrar sesion en Moment?</p>
             <div>
               <button className="profile-btn" onClick={() => setConfirmarSalida(false)}>Cancelar</button>
               <button className="danger-btn" onClick={cerrarSesion}>Si, cerrar sesion</button>
