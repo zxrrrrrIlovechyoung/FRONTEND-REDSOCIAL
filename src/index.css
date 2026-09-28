@@ -2317,6 +2317,48 @@ pre {
   padding: 32px 0 80px;
 }
 
+.moderator-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  background: #fbfbfd;
+}
+
+.moderator-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 28px 18px 14px;
+  border-right: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.moderator-role-card {
+  display: grid;
+  gap: 3px;
+  padding: 12px;
+  border: 1px solid #eceff3;
+  border-radius: 8px;
+  background: #fbfbfd;
+}
+
+.moderator-role-card strong {
+  overflow: hidden;
+  color: #111827;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.moderator-role-card span {
+  color: #64748b;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
 .moderator-header {
   display: flex;
   align-items: flex-end;
@@ -2711,6 +2753,11 @@ pre {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .moderator-stats,
+  .moderator-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .brand {
     justify-content: center;
     padding-inline: 0;
@@ -2798,6 +2845,28 @@ pre {
     padding: 18px 14px 100px;
   }
 
+  .moderator-page {
+    max-width: none;
+    margin: 0;
+    padding: 18px 14px 100px;
+  }
+
+  .moderator-shell {
+    display: block;
+  }
+
+  .moderator-sidebar {
+    position: static;
+    height: auto;
+    padding: 18px 14px;
+    border-right: 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .moderator-role-card {
+    display: none;
+  }
+
   .favorites-page {
     max-width: none;
     margin: 0;
@@ -2807,6 +2876,11 @@ pre {
   .search-profiles,
   .search-grid,
   .favorites-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .moderator-stats,
+  .moderator-grid {
     grid-template-columns: 1fr;
   }
 

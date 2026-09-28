@@ -1,5 +1,11 @@
-import AppSidebar from '../components/AppSidebar'
 import { useAuth } from '../context/AuthContext'
+
+const menuModerador = [
+  { icono: '▦', texto: 'Dashboard', activo: true },
+  { icono: '!', texto: 'Reportes' },
+  { icono: '⌁', texto: 'Spam' },
+  { icono: '⊘', texto: 'Restricciones' },
+]
 
 const cuentasReportadas = [
   { id: 1, usuario: '@flash.sale22', nombre: 'Promos Flash', reportes: 42, motivo: 'Spam repetitivo', riesgo: 'Alto' },
@@ -17,8 +23,29 @@ export default function Moderador() {
   const { usuario } = useAuth()
 
   return (
-    <main className="app-shell">
-      <AppSidebar activo="Moderador" />
+    <main className="moderator-shell">
+      <aside className="moderator-sidebar">
+        <div>
+          <div className="brand">
+            <span className="brand-mark">M</span>
+            <span>Moment</span>
+          </div>
+
+          <nav className="side-nav" aria-label="Herramientas de moderacion">
+            {menuModerador.map((item) => (
+              <button className={`nav-item${item.activo ? ' activo' : ''}`} key={item.texto}>
+                <span className="nav-icon">{item.icono}</span>
+                <span>{item.texto}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="moderator-role-card">
+          <strong>{usuario?.nombreUsuario ?? 'moderador'}</strong>
+          <span>{usuario?.rol ?? 'moderador'}</span>
+        </div>
+      </aside>
 
       <section className="moderator-page" aria-label="Panel de moderador">
         <header className="moderator-header">
