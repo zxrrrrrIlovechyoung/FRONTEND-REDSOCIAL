@@ -1,84 +1,108 @@
+import { useEffect, useMemo, useState } from 'react'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
 
 const favoritos = [
   {
     id: 1,
+    tipo: 'imagen',
     autor: 'Camila Torres',
     usuario: '@cami.t',
-    avatar: 'CT',
     tiempo: 'Guardado ayer',
     imagen: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'Un recuerdo no tiene que ser perfecto para quedarse contigo. A veces basta con que haya sido real.',
+    pensamiento: 'Un recuerdo no tiene que ser perfecto para quedarse contigo.',
     likes: '2,019',
-    comentarios: '132',
   },
   {
     id: 2,
+    tipo: 'video',
     autor: 'Sofia Marin',
     usuario: '@sofia.m',
-    avatar: 'SM',
     tiempo: 'Guardado hace 2 dias',
     imagen: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80',
     pensamiento: 'Hay personas que hacen que cualquier plan improvisado se vuelva una historia bonita.',
     likes: '1,104',
-    comentarios: '54',
   },
   {
     id: 3,
+    tipo: 'imagen',
     autor: 'Mateo Rios',
     usuario: '@mateorios',
-    avatar: 'MR',
     tiempo: 'Guardado esta semana',
     imagen: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'Me gusta pensar que crecer tambien es aprender a caminar mas lento cuando algo vale la pena.',
+    pensamiento: 'Crecer tambien es aprender a caminar mas lento.',
     likes: '943',
-    comentarios: '41',
+  },
+  {
+    id: 4,
+    tipo: 'imagen',
+    autor: 'Valeria Cruz',
+    usuario: '@vale.cruz',
+    tiempo: 'Guardado hoy',
+    imagen: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+    pensamiento: 'Luz bonita, buena musica y cero prisa.',
+    likes: '1,284',
   },
 ]
 
 export default function Favoritos() {
+  const [cargando, setCargando] = useState(true)
+  const [filtro, setFiltro] = useState('todo')
+
+  useEffect(() => {
+    const timer = setTimeout(() => setCargando(false), 700)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const favoritosVisibles = useMemo(() => {
+    if (filtro === 'todo') return favoritos
+    return favoritos.filter((item) => item.tipo === filtro)
+  }, [filtro])
+
+  const cambiarFiltro = (valor) => {
+    setFiltro(valor)
+    setCargando(true)
+    setTimeout(() => setCargando(false), 520)
+  }
+
   return (
     <main className="app-shell">
       <AppSidebar activo="Favoritos" />
 
-      <section className="feed favorites-feed" aria-label="Publicaciones favoritas">
-        <div className="feed-header">
-          <div>
-            <p className="feed-kicker">Tu coleccion</p>
-            <h1>Favoritos</h1>
-          </div>
+      <section className="favorites-page" aria-label="Publicaciones favoritas">
+        <header className="search-header">
+          <p className="feed-kicker">Tu coleccion</p>
+          <h1>Favoritos</h1>
+          <span className="favorites-copy">Momentos, imagenes y videos que guardaste para volver despues.</span>
+        </header>
+
+        <div className="search-filters">
+          {['todo', 'imagen', 'video'].map((item) => (
+            <button className={filtro === item ? 'activo' : ''} key={item} onClick={() => cambiarFiltro(item)}>
+              {item === 'todo' ? 'Todo' : item === 'imagen' ? 'Imagenes' : 'Videos'}
+            </button>
+          ))}
         </div>
 
-        <div className="post-list">
-          {favoritos.map((post) => (
-            <article className="post-card" key={post.id}>
-              <header className="post-top">
-                <div className="author">
-                  <div className="author-avatar">{post.avatar}</div>
-                  <div>
-                    <strong>{post.autor}</strong>
-                    <span>{post.usuario} · {post.tiempo}</span>
-                  </div>
-                </div>
+        <div className="profile-section-title">
+          <h2>Guardados recientemente</h2>
+          <span>{cargando ? 'Cargando...' : `${favoritosVisibles.length} favoritos`}</span>
+        </div>
+
+        <div className="favorites-grid">
+          {cargando ? [1, 2, 3, 4].map((item) => (
+            <article className="favorite-tile skeleton-favorite" key={item}>
+              <span className="skeleton-fill" />
+            </article>
+          )) : favoritosVisibles.map((post) => (
+            <article className="favorite-tile" key={post.id}>
+              <img src={post.imagen} alt={`Favorito de ${post.autor}`} />
+              {post.tipo === 'video' && <span className="media-type">▷</span>}
+              <div>
                 <span className="favorite-badge">Favorito</span>
-              </header>
-
-              <img className="post-image" src={post.imagen} alt={`Publicacion favorita de ${post.autor}`} />
-
-              <div className="post-actions">
-                <div>
-                  <button aria-label="Me gusta">♥</button>
-                  <button aria-label="Comentar">☰</button>
-                  <button aria-label="Enviar">✉</button>
-                </div>
-                <button aria-label="Guardado">■</button>
-              </div>
-
-              <div className="post-body">
-                <strong>{post.likes} me gusta</strong>
-                <p><span>{post.usuario}</span> {post.pensamiento}</p>
-                <button className="comments-btn">Ver {post.comentarios} comentarios</button>
+                <strong>{post.usuario}</strong>
+                <p>{post.pensamiento}</p>
+                <small>{post.likes} me gusta · {post.tiempo}</small>
               </div>
             </article>
           ))}
