@@ -14,7 +14,10 @@ export function AuthProvider({ children }) {
 
   const login = async (usuarioOEmail, password) => {
     const resultado = await authService.login(usuarioOEmail, password)
-    if (resultado.exito) iniciarSesion(resultado.datos)
+    if (resultado.exito) {
+      iniciarSesion(resultado.datos)
+      return { ...resultado, datos: tokenStorage.obtenerUsuario() }
+    }
     return resultado
   }
 

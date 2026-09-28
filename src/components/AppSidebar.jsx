@@ -14,6 +14,10 @@ export default function AppSidebar({ activo = 'Inicio' }) {
   const { usuario } = useAuth()
   const [sidebarContraido, setSidebarContraido] = useState(false)
   const nombre = usuario?.nombreUsuario || usuario?.usuario || 'Raul'
+  const rol = usuario?.rol ?? 'usuario'
+  const herramientasVisibles = ['moderador', 'admin'].includes(rol)
+    ? [...herramientas, { icono: '!', texto: 'Moderador', ruta: '/moderador' }]
+    : herramientas
 
   return (
     <aside className={`sidebar${sidebarContraido ? ' contraido' : ''}`}>
@@ -37,7 +41,7 @@ export default function AppSidebar({ activo = 'Inicio' }) {
         </Link>
 
         <nav className="side-nav" aria-label="Herramientas principales">
-          {herramientas.map((item) => {
+          {herramientasVisibles.map((item) => {
             const contenido = (
               <>
                 <span className="nav-icon">{item.icono}</span>

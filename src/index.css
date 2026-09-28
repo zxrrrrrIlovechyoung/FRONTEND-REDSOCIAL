@@ -1633,6 +1633,41 @@ pre {
   overflow: hidden;
 }
 
+.empty-chat {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  padding: 24px;
+  color: #64748b;
+  text-align: center;
+}
+
+.empty-chat span {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #f8fafc;
+  color: #111827;
+  font-size: 24px;
+}
+
+.empty-chat h2 {
+  margin: 4px 0 0;
+  color: #111827;
+  font-size: 21px;
+}
+
+.empty-chat p {
+  max-width: 300px;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
 .chat-room-head {
   display: flex;
   align-items: center;
@@ -2272,6 +2307,192 @@ pre {
   margin-top: 8px;
   color: #64748b;
   font-size: 13px;
+  line-height: 1.45;
+}
+
+.moderator-page {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 0 80px;
+}
+
+.moderator-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 26px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.moderator-header h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.moderator-header span {
+  display: block;
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.moderator-header > strong {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #111827;
+  color: #fff;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.moderator-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.moderator-stats article,
+.moderator-panel {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.moderator-stats article {
+  padding: 17px;
+}
+
+.moderator-stats strong {
+  display: block;
+  color: #111827;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.moderator-stats span {
+  display: block;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.moderator-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr);
+  gap: 16px;
+}
+
+.moderator-panel {
+  padding: 18px;
+}
+
+.reported-list,
+.spam-list {
+  display: grid;
+  gap: 10px;
+}
+
+.reported-card,
+.spam-card {
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  background: #fbfbfd;
+}
+
+.reported-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 14px;
+}
+
+.reported-card strong,
+.reported-card span {
+  display: block;
+}
+
+.reported-card strong {
+  color: #111827;
+  font-size: 14px;
+}
+
+.reported-card span,
+.reported-card p {
+  color: #64748b;
+  font-size: 12.5px;
+}
+
+.reported-card p {
+  margin: 8px 0 0;
+}
+
+.reported-card > small {
+  align-self: start;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.reported-card > small.risk-high {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.moderator-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.moderator-actions button,
+.spam-card button {
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  background: #fff;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.moderator-actions .danger-text {
+  color: #dc2626;
+}
+
+.spam-card {
+  padding: 14px;
+}
+
+.spam-card small {
+  color: #e11d48;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.spam-card strong {
+  display: block;
+  margin-top: 6px;
+  color: #111827;
+  font-size: 14px;
+}
+
+.spam-card p {
+  margin: 7px 0 12px;
+  color: #64748b;
+  font-size: 12.5px;
   line-height: 1.45;
 }
 

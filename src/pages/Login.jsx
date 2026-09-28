@@ -4,13 +4,13 @@ import { useAuth } from '../context/AuthContext'
 import CampoPassword from '../components/CampoPassword'
 
 export default function Login() {
-  const { login, estaAutenticado } = useAuth()
+  const { login, estaAutenticado, usuario } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({ usuarioOEmail: '', password: '' })
   const [errores, setErrores] = useState({})
   const [cargando, setCargando] = useState(false)
 
-  if (estaAutenticado) return <Navigate to="/inicio" replace />
+  if (estaAutenticado) return <Navigate to={['moderador', 'admin'].includes(usuario?.rol) ? '/moderador' : '/inicio'} replace />
 
   const onChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -28,7 +28,10 @@ export default function Login() {
     setCargando(true)
     const resultado = await login(form.usuarioOEmail, form.password)
     setCargando(false)
-    if (resultado.exito) navigate('/inicio')
+    if (resultado.exito) {
+      const rol = resultado.datos?.rol ?? 'usuario'
+      navigate(['moderador', 'admin'].includes(rol) ? '/moderador' : '/inicio')
+    }
     else setErrores({ password: resultado.mensaje })
   }
 

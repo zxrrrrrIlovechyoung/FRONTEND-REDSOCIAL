@@ -52,7 +52,7 @@ const chats = [
 ]
 
 export default function Mensajes() {
-  const [chatActivo, setChatActivo] = useState(chats[0])
+  const [chatActivo, setChatActivo] = useState(null)
   const [arrastrando, setArrastrando] = useState(false)
   const estadosRef = useRef(null)
   const dragRef = useRef({ inicioX: 0, scrollInicial: 0 })
@@ -110,7 +110,7 @@ export default function Mensajes() {
           <div className="chat-list-large">
             {chats.map((chat) => (
               <button
-                className={`chat-preview${chatActivo.id === chat.id ? ' activo' : ''}`}
+                className={`chat-preview${chatActivo?.id === chat.id ? ' activo' : ''}`}
                 key={chat.id}
                 onClick={() => setChatActivo(chat)}
               >
@@ -128,27 +128,37 @@ export default function Mensajes() {
           </div>
         </aside>
 
-        <section className="chat-room" aria-label={`Chat con ${chatActivo.nombre}`}>
-          <header className="chat-room-head">
-            <div className="chat-avatar">{chatActivo.iniciales}</div>
-            <div>
-              <strong>{chatActivo.nombre}</strong>
-              <span>{chatActivo.usuario}</span>
+        <section className="chat-room" aria-label={chatActivo ? `Chat con ${chatActivo.nombre}` : 'Selecciona un chat'}>
+          {!chatActivo ? (
+            <div className="empty-chat">
+              <span>✉</span>
+              <h2>Selecciona un chat para verlo</h2>
+              <p>Elige una conversación de la lista para leer mensajes y responder.</p>
             </div>
-          </header>
+          ) : (
+            <>
+              <header className="chat-room-head">
+                <div className="chat-avatar">{chatActivo.iniciales}</div>
+                <div>
+                  <strong>{chatActivo.nombre}</strong>
+                  <span>{chatActivo.usuario}</span>
+                </div>
+              </header>
 
-          <div className="chat-thread">
-            {chatActivo.mensajes.map((mensaje) => (
-              <p className={`message-bubble${mensaje.propio ? ' propio' : ''}`} key={mensaje.id}>
-                {mensaje.texto}
-              </p>
-            ))}
-          </div>
+              <div className="chat-thread">
+                {chatActivo.mensajes.map((mensaje) => (
+                  <p className={`message-bubble${mensaje.propio ? ' propio' : ''}`} key={mensaje.id}>
+                    {mensaje.texto}
+                  </p>
+                ))}
+              </div>
 
-          <form className="message-composer">
-            <input placeholder="Escribe un mensaje..." aria-label="Escribe un mensaje" />
-            <button type="button">Enviar</button>
-          </form>
+              <form className="message-composer">
+                <input placeholder="Escribe un mensaje..." aria-label="Escribe un mensaje" />
+                <button type="button">Enviar</button>
+              </form>
+            </>
+          )}
         </section>
       </section>
     </main>

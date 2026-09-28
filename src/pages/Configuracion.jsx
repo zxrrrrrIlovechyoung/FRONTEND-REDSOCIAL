@@ -20,7 +20,7 @@ export default function Configuracion() {
   const { logout } = useAuth()
   const navigate = useNavigate()
   const [confirmarSalida, setConfirmarSalida] = useState(false)
-  const [cuentaAbierta, setCuentaAbierta] = useState(true)
+  const [cuentaAbierta, setCuentaAbierta] = useState(false)
   const [detalle, setDetalle] = useState('')
 
   const opcionActiva = opcionesCuenta.find((opcion) => opcion.id === detalle)
