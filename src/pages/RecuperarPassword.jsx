@@ -8,6 +8,13 @@ const reglasPassword = [
   { id: 'mayuscula', texto: 'Al menos una mayúscula', valida: (valor) => /[A-ZÁÉÍÓÚÑ]/.test(valor) },
   { id: 'especial', texto: 'Al menos un carácter especial', valida: (valor) => /[^A-Za-z0-9ÁÉÍÓÚáéíóúÑñ]/.test(valor) },
 ]
+const reglasFuerzaPassword = [
+  (valor) => valor.length >= 8,
+  (valor) => /[a-záéíóúñ]/.test(valor),
+  (valor) => /[A-ZÁÉÍÓÚÑ]/.test(valor),
+  (valor) => /\d/.test(valor),
+  (valor) => /[^A-Za-z0-9ÁÉÍÓÚáéíóúÑñ]/.test(valor),
+]
 const dominiosEmail = ['gmail.com', 'hotmail.com']
 
 export default function RecuperarPassword() {
@@ -25,6 +32,9 @@ export default function RecuperarPassword() {
   const passwordCumple = reglasPassword.every((regla) => regla.valida(form.password))
   const noCoinciden = form.confirmar !== '' && form.password !== form.confirmar
   const passwordLista = passwordCumple && form.confirmar !== '' && form.password === form.confirmar
+  const nivelPassword = form.password ? Math.max(1, reglasFuerzaPassword.filter((regla) => regla(form.password)).length) : 0
+  const textoNivelPassword = ['', 'Muy débil', 'Débil', 'Media', 'Buena', 'Segura'][nivelPassword]
+  const bloquearPortapapeles = (e) => e.preventDefault()
 
   const onChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -156,12 +166,16 @@ export default function RecuperarPassword() {
           {paso === 3 && (
             <form onSubmit={guardarPassword} noValidate>
               <div className="campo">
-                <CampoPassword invalido={Boolean(errores.password)} name="password" placeholder="Nueva contraseña" aria-label="Nueva contraseña" value={form.password} onChange={onChange} autoComplete="new-password" maxLength={72} disabled={cargando} />
+                <CampoPassword invalido={Boolean(errores.password)} name="password" placeholder="Nueva contraseña" aria-label="Nueva contraseña" value={form.password} onChange={onChange} autoComplete="new-password" maxLength={72} disabled={cargando} onCopy={bloquearPortapapeles} onCut={bloquearPortapapeles} onPaste={bloquearPortapapeles} />
                 {errores.password && <span className="campo-error">{errores.password}</span>}
               </div>
               <div className="campo">
-                <CampoPassword invalido={noCoinciden || Boolean(errores.confirmar)} name="confirmar" placeholder="Confirmar contraseña" aria-label="Confirmar contraseña" value={form.confirmar} onChange={onChange} autoComplete="new-password" maxLength={72} disabled={cargando} />
+                <CampoPassword invalido={noCoinciden || Boolean(errores.confirmar)} name="confirmar" placeholder="Confirmar contraseña" aria-label="Confirmar contraseña" value={form.confirmar} onChange={onChange} autoComplete="new-password" maxLength={72} disabled={cargando} onCopy={bloquearPortapapeles} onCut={bloquearPortapapeles} onPaste={bloquearPortapapeles} />
                 {(noCoinciden || errores.confirmar) && <span className="campo-error">{errores.confirmar || 'Las contraseñas no coinciden'}</span>}
+                <div className={`password-meter nivel-${nivelPassword}`} aria-live="polite">
+                  {Array.from({ length: 5 }).map((_, index) => <span key={index} />)}
+                  {textoNivelPassword && <strong>{textoNivelPassword}</strong>}
+                </div>
                 <ul className="password-rules" aria-label="Reglas de contraseña">
                   {reglasPassword.map((regla) => <li className={regla.valida(form.password) ? 'cumple' : ''} key={regla.id}>{regla.texto}</li>)}
                 </ul>
