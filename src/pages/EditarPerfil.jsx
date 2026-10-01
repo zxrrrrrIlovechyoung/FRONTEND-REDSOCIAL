@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
+import SuccessPop from '../components/SuccessPop'
 import { useAuth } from '../context/AuthContext'
 import { authService } from '../services/authService'
 
@@ -33,9 +34,18 @@ export default function EditarPerfil() {
   const [guardandoNombre, setGuardandoNombre] = useState(false)
   const [guardandoUsuario, setGuardandoUsuario] = useState(false)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
+  const [modalFotoAbierto, setModalFotoAbierto] = useState(false)
+  const [archivoFoto, setArchivoFoto] = useState(null)
+  const [previewFoto, setPreviewFoto] = useState('')
+  const [zoomFoto, setZoomFoto] = useState(1)
+  const [offsetFoto, setOffsetFoto] = useState({ x: 0, y: 0 })
+  const [errorFoto, setErrorFoto] = useState('')
   const [mensaje, setMensaje] = useState('')
+  const [popExito, setPopExito] = useState('')
   const [error, setError] = useState('')
   const inputFotoRef = useRef(null)
+  const imagenFotoRef = useRef(null)
+  const dragFotoRef = useRef(null)
   const nombre = usuario?.nombreUsuario || usuario?.usuario || 'Raul'
   const fotoPerfilUrl = normalizarMediaUrl(perfil?.fotoPerfilUrl)
 
@@ -123,25 +133,144 @@ export default function EditarPerfil() {
     setMensaje('Usuario actualizado.')
   }
 
-  const cambiarFoto = async (e) => {
+  const cambiarFoto = (e) => {
     const foto = e.target.files?.[0]
     if (!foto) return
 
-    setSubiendoFoto(true)
+    if (!foto.type.startsWith('image/')) {
+      setError('Selecciona una imagen válida.')
+      return
+    }
+
+    if (previewFoto) URL.revokeObjectURL(previewFoto)
+
+    setArchivoFoto(foto)
+    setPreviewFoto(URL.createObjectURL(foto))
+    setZoomFoto(1)
+    setOffsetFoto({ x: 0, y: 0 })
+    setErrorFoto('')
+    setModalFotoAbierto(true)
     setError('')
     setMensaje('')
+  }
 
-    const resultado = await authService.actualizarFotoPerfil(foto)
-    setSubiendoFoto(false)
+  const cerrarModalFoto = () => {
+    setModalFotoAbierto(false)
+    setArchivoFoto(null)
+    if (previewFoto) URL.revokeObjectURL(previewFoto)
+    setPreviewFoto('')
+    setZoomFoto(1)
+    setOffsetFoto({ x: 0, y: 0 })
+    setErrorFoto('')
     if (inputFotoRef.current) inputFotoRef.current.value = ''
+  }
+
+  const iniciarArrastreFoto = (e) => {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    dragFotoRef.current = {
+      pointerId: e.pointerId,
+      inicioX: e.clientX,
+      inicioY: e.clientY,
+      offsetInicial: offsetFoto,
+    }
+  }
+
+  const arrastrarFoto = (e) => {
+    const drag = dragFotoRef.current
+    if (!drag || drag.pointerId !== e.pointerId) return
+
+    setOffsetFoto({
+      x: drag.offsetInicial.x + (e.clientX - drag.inicioX),
+      y: drag.offsetInicial.y + (e.clientY - drag.inicioY),
+    })
+  }
+
+  const terminarArrastreFoto = (e) => {
+    if (dragFotoRef.current?.pointerId === e.pointerId) dragFotoRef.current = null
+  }
+
+  const ajustarZoomFoto = (e) => {
+    e.preventDefault()
+    const cambio = e.deltaY > 0 ? -0.08 : 0.08
+    setZoomFoto((actual) => Math.min(3, Math.max(1, Number((actual + cambio).toFixed(2)))))
+  }
+
+  const centrarFoto = () => {
+    setOffsetFoto({ x: 0, y: 0 })
+    setZoomFoto(1)
+  }
+
+  const crearFotoRecortada = () => new Promise((resolve, reject) => {
+    const imagen = imagenFotoRef.current
+    if (!imagen) {
+      reject(new Error('No se pudo preparar la imagen.'))
+      return
+    }
+
+    const size = 512
+    const editorSize = 240
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) {
+      reject(new Error('No se pudo preparar la imagen.'))
+      return
+    }
+
+    const escalaBase = Math.max(size / imagen.naturalWidth, size / imagen.naturalHeight)
+    const escala = escalaBase * zoomFoto
+    const ancho = imagen.naturalWidth * escala
+    const alto = imagen.naturalHeight * escala
+    const offsetX = offsetFoto.x * (size / editorSize)
+    const offsetY = offsetFoto.y * (size / editorSize)
+    const x = (size - ancho) / 2 + offsetX
+    const y = (size - alto) / 2 + offsetY
+
+    ctx.fillStyle = '#f8fafc'
+    ctx.fillRect(0, 0, size, size)
+    ctx.drawImage(imagen, x, y, ancho, alto)
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error('No se pudo preparar la imagen.'))
+        return
+      }
+
+      resolve(new File([blob], 'foto-perfil.webp', { type: 'image/webp' }))
+    }, 'image/webp', 0.9)
+  })
+
+  const guardarFotoPerfil = async () => {
+    if (!archivoFoto) {
+      setErrorFoto('Selecciona una foto para tu perfil.')
+      return
+    }
+
+    let fotoFinal
+    try {
+      fotoFinal = await crearFotoRecortada()
+    } catch {
+      setErrorFoto('No se pudo preparar la foto. Intenta con otra imagen.')
+      return
+    }
+
+    setSubiendoFoto(true)
+    setErrorFoto('')
+
+    const resultado = await authService.actualizarFotoPerfil(fotoFinal)
+    setSubiendoFoto(false)
 
     if (!resultado.exito) {
-      setError(resultado.mensaje || 'Ups, algo salió mal. Inténtalo más tarde')
+      setErrorFoto(resultado.mensaje || 'Ups, algo salió mal. Inténtalo más tarde')
       return
     }
 
     setPerfil(resultado.datos)
-    setMensaje('Foto de perfil actualizada.')
+    setPopExito('Foto de perfil actualizada')
+    window.setTimeout(() => setPopExito(''), 1900)
+    cerrarModalFoto()
   }
 
   return (
@@ -253,6 +382,54 @@ export default function EditarPerfil() {
           </div>
         </section>
       </section>
+
+      <SuccessPop visible={Boolean(popExito)} mensaje={popExito} />
+
+      {modalFotoAbierto && (
+        <div className="profile-photo-backdrop" role="presentation" onClick={cerrarModalFoto}>
+          <section className="profile-photo-modal" role="dialog" aria-modal="true" aria-label="Ajustar foto de perfil" onClick={(e) => e.stopPropagation()}>
+            <header>
+              <div>
+                <p className="feed-kicker">Foto de perfil</p>
+                <h2>Ajustar foto</h2>
+              </div>
+              <button onClick={cerrarModalFoto} aria-label="Cerrar">×</button>
+            </header>
+
+            <div
+              className="profile-photo-editor"
+              onPointerDown={iniciarArrastreFoto}
+              onPointerMove={arrastrarFoto}
+              onPointerUp={terminarArrastreFoto}
+              onPointerCancel={terminarArrastreFoto}
+              onWheel={ajustarZoomFoto}
+              onDoubleClick={centrarFoto}
+              role="presentation"
+            >
+              {previewFoto && (
+                <img
+                  ref={imagenFotoRef}
+                  src={previewFoto}
+                  alt="Vista previa de foto de perfil"
+                  draggable="false"
+                  style={{ transform: `translate(${offsetFoto.x}px, ${offsetFoto.y}px) scale(${zoomFoto})` }}
+                />
+              )}
+            </div>
+
+            <p className="profile-photo-hint">Arrastra para acomodar. Usa la rueda para acercar. Doble click centra la foto.</p>
+
+            {errorFoto && <p className="profile-form-error">{errorFoto}</p>}
+
+            <div className="profile-photo-actions">
+              <button className="profile-btn" onClick={cerrarModalFoto}>Cancelar</button>
+              <button className="profile-btn primary" onClick={guardarFotoPerfil} disabled={subiendoFoto}>
+                {subiendoFoto ? <span className="spinner" aria-hidden="true" /> : 'Guardar foto'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       <MessagesWidget />
     </main>
