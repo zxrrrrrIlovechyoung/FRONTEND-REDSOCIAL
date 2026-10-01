@@ -1,9 +1,13 @@
 export const formatearFechaMomento = (fecha) => {
-  const publicada = new Date(fecha)
+  const fechaTexto = String(fecha ?? '')
+  const tieneZonaHoraria = /(?:z|[+-]\d{2}:\d{2})$/i.test(fechaTexto)
+  const publicada = new Date(tieneZonaHoraria ? fechaTexto : `${fechaTexto}Z`)
   if (Number.isNaN(publicada.getTime())) return ''
 
   const ahora = new Date()
-  const diffMs = Math.max(0, ahora.getTime() - publicada.getTime())
+  const diffMs = ahora.getTime() - publicada.getTime()
+  if (diffMs < -60000) return 'Ahora'
+
   const minutos = Math.floor(diffMs / 60000)
 
   if (minutos < 1) return 'Ahora'
