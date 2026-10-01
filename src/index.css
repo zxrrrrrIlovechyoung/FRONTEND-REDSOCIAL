@@ -159,7 +159,8 @@ button { font: inherit; }
 
 .campo { margin-bottom: 16px; }
 .input-wrap { position: relative; }
-.username-field { position: relative; }
+.username-field,
+.email-field { position: relative; }
 .username-field > span {
   position: absolute;
   left: 13px;
@@ -199,9 +200,13 @@ button { font: inherit; }
 .campo-error { display: block; margin-top: 5px; font-size: 11px; color: var(--danger); }
 .campo-ayuda { display: block; margin-top: 6px; color: var(--muted); font-size: 11.5px; line-height: 1.35; }
 .estado-usuario.disponible { color: var(--success); font-weight: 700; }
+.estado-email.disponible { color: var(--success); font-weight: 700; }
 .estado-usuario.ocupado,
-.estado-usuario.invalido { color: var(--danger); font-weight: 700; }
-.estado-usuario.verificando { color: var(--muted); }
+.estado-usuario.invalido,
+.estado-email.ocupado,
+.estado-email.invalido { color: var(--danger); font-weight: 700; }
+.estado-usuario.verificando,
+.estado-email.verificando { color: var(--muted); }
 
 .password-rules {
   display: grid;

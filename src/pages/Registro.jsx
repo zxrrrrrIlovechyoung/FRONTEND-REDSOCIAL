@@ -36,7 +36,7 @@ const fechaMaximaNacimiento = () => {
 }
 
 export default function Registro() {
-  const { registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, verificarUsuarioDisponible, estaAutenticado } = useAuth()
+  const { registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, verificarEmailDisponible, verificarUsuarioDisponible, estaAutenticado } = useAuth()
   const navigate = useNavigate()
   const [paso, setPaso] = useState(1)
   const [form, setForm] = useState({
@@ -52,6 +52,7 @@ export default function Registro() {
   const [errores, setErrores] = useState({})
   const [cargando, setCargando] = useState(false)
   const [estadoCodigo, setEstadoCodigo] = useState('idle')
+  const [estadoEmail, setEstadoEmail] = useState('idle')
   const [estadoUsuario, setEstadoUsuario] = useState('idle')
   const [correoVerificado, setCorreoVerificado] = useState(false)
   const [cuentaCreada, setCuentaCreada] = useState(false)
@@ -82,6 +83,35 @@ export default function Registro() {
     window.addEventListener('beforeunload', advertirSalida)
     return () => window.removeEventListener('beforeunload', advertirSalida)
   }, [cuentaCreada, form.email, paso])
+
+  useEffect(() => {
+    if (paso !== 1) return undefined
+
+    const email = form.email.trim().toLowerCase()
+    if (!email) {
+      setEstadoEmail('idle')
+      return undefined
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEstadoEmail('invalido')
+      return undefined
+    }
+
+    let cancelado = false
+    setEstadoEmail('verificando')
+
+    const timer = window.setTimeout(async () => {
+      const resultado = await verificarEmailDisponible(email)
+      if (cancelado) return
+      setEstadoEmail(resultado.exito && resultado.datos?.disponible ? 'disponible' : 'ocupado')
+    }, 450)
+
+    return () => {
+      cancelado = true
+      window.clearTimeout(timer)
+    }
+  }, [form.email, paso, verificarEmailDisponible])
 
   useEffect(() => {
     if (paso !== 4) return undefined
@@ -184,6 +214,7 @@ export default function Registro() {
     if (pasoActual === 1) {
       if (!form.email.trim()) nuevosErrores.email = 'El correo es obligatorio'
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) nuevosErrores.email = 'Ingresa un correo válido'
+      else if (estadoEmail !== 'disponible') nuevosErrores.email = 'Elige un correo disponible'
     }
 
     if (pasoActual === 2) {
@@ -303,6 +334,14 @@ export default function Registro() {
     invalido: 'Usa letras, números, punto y al menos un guion bajo',
   }[estadoUsuario]
 
+  const textoEstadoEmail = {
+    idle: 'Escribe tu correo.',
+    verificando: 'Comprobando disponibilidad...',
+    disponible: 'Correo disponible',
+    ocupado: 'Correo no disponible',
+    invalido: 'Ingresa un correo válido',
+  }[estadoEmail]
+
   return (
     <main className="auth">
       {!cuentaCreada && (
@@ -327,10 +366,14 @@ export default function Registro() {
           <form onSubmit={onSubmit} noValidate>
             {paso === 1 && (
               <div className="campo">
-                <input
-                  className={`input${errores.email ? ' invalido' : ''}`} name="email" type="email" placeholder="Correo electrónico" aria-label="Correo electrónico"
-                  value={form.email} onChange={onChange} onKeyDown={alternarDominioEmail} autoComplete="email" maxLength={100} disabled={cargando}
-                />
+                <div className="email-field">
+                  <input
+                    className={`input${errores.email || estadoEmail === 'ocupado' || estadoEmail === 'invalido' ? ' invalido' : ''}`} name="email" type="email" placeholder="Correo electrónico" aria-label="Correo electrónico"
+                    value={form.email} onChange={onChange} onKeyDown={alternarDominioEmail} autoComplete="email" maxLength={100} disabled={cargando}
+                  />
+                  {estadoEmail === 'verificando' && <span className="field-spinner"><span className="spinner oscuro" /></span>}
+                </div>
+                <span className={`campo-ayuda estado-email ${estadoEmail}`}>{textoEstadoEmail}</span>
                 {errores.email && <span className="campo-error">{errores.email}</span>}
               </div>
             )}
@@ -438,7 +481,7 @@ export default function Registro() {
                 </button>
               )}
               {paso < 4 ? (
-                <button className="btn" type="button" onClick={siguiente} disabled={cargando || (paso === 2 && form.codigo.length < 6) || (paso === 3 && !passwordPerfecta)}>
+                <button className="btn" type="button" onClick={siguiente} disabled={cargando || (paso === 1 && estadoEmail !== 'disponible') || (paso === 2 && form.codigo.length < 6) || (paso === 3 && !passwordPerfecta)}>
                   {cargando ? <span className="spinner" /> : 'Continuar'}
                 </button>
               ) : (
