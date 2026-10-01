@@ -32,4 +32,13 @@ export const authService = {
   perfil: () => llamar(() => httpClient.get('/auth/perfil')),
   miPerfil: () => llamar(() => httpClient.get('/perfil/me')),
   actualizarSobreMi: (sobreMi) => llamar(() => httpClient.put('/perfil/sobre-mi', { sobreMi })),
+  actualizarNombrePerfil: (nombrePerfil) => llamar(() => httpClient.put('/perfil/nombre-perfil', { nombrePerfil })),
+  actualizarNombreUsuario: (nombreUsuario) => llamar(() => httpClient.put('/perfil/nombre-usuario', { nombreUsuario })),
+  actualizarFotoPerfil: (foto) => {
+    const formData = new FormData()
+    formData.append('foto', foto)
+    return llamar(() => httpClient.post('/perfil/foto', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }))
+  },
 }
