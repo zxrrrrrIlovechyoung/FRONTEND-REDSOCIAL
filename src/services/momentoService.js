@@ -21,6 +21,7 @@ export const momentoService = {
   misMomentos: ({ cursor, cantidad = 30 } = {}) => llamar(() => httpClient.get('/momentos/me', {
     params: { cursor, cantidad },
   })),
+  alternarMeGusta: (idMomento) => llamar(() => httpClient.post(`/momentos/${idMomento}/me-encanta`)),
   crear: ({ texto, tipoAdjunto, archivo, linkUrl }) => {
     const formData = new FormData()
     formData.append('texto', texto)

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
 import { momentoService } from '../services/momentoService'
+import { formatearFechaMomento } from '../utils/fechas'
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:5079/api').replace(/\/api\/?$/, '')
 
@@ -13,32 +14,23 @@ const normalizarMediaUrl = (url) => {
 
 const inicialesDe = (texto) => (texto || 'MM').replace('@', '').slice(0, 2).toUpperCase()
 
-const tiempoRelativo = (fecha) => {
-  const diff = Date.now() - new Date(fecha).getTime()
-  const minutos = Math.max(1, Math.floor(diff / 60000))
-  if (minutos < 60) return `Hace ${minutos} min`
-  const horas = Math.floor(minutos / 60)
-  if (horas < 24) return `Hace ${horas} h`
-  return `Hace ${Math.floor(horas / 24)} d`
-}
-
 const mapearMomento = (momento) => ({
   id: momento.idMomento,
   autor: momento.autor || 'Moment',
   usuario: momento.usuario || '@moment',
   avatar: momento.avatar || inicialesDe(momento.autor || momento.usuario),
-  tiempo: tiempoRelativo(momento.fechaCreacion),
+  tiempo: formatearFechaMomento(momento.fechaCreacion),
   imagen: normalizarMediaUrl(momento.archivoUrl),
   tipoAdjunto: momento.tipoAdjunto,
   linkUrl: momento.linkUrl,
   pensamiento: momento.texto,
-  likes: String(momento.totalMeGusta ?? 0),
+  likes: momento.totalMeGusta ?? 0,
   comentarios: String(momento.totalComentarios ?? 0),
+  leGusta: Boolean(momento.leGusta),
   real: true,
 })
 
 export default function Inicio() {
-  const [likesActivos, setLikesActivos] = useState({})
   const [corazonesAnimados, setCorazonesAnimados] = useState({})
   const [estadoAbierto, setEstadoAbierto] = useState(null)
   const [crearAbierto, setCrearAbierto] = useState(false)
@@ -98,20 +90,35 @@ export default function Inicio() {
     setCorazonesAnimados((actual) => ({ ...actual, [id]: (actual[id] || 0) + 1 }))
   }
 
-  const alternarLike = (id) => {
-    setLikesActivos((actual) => ({ ...actual, [id]: !actual[id] }))
-    animarCorazon(id)
+  const actualizarMeGustaEnFeed = (id, resultado) => {
+    setFeed((actual) => actual.map((post) => (
+      post.id === id
+        ? { ...post, leGusta: resultado.leGusta, likes: resultado.totalMeGusta }
+        : post
+    )))
+
+    setEstadoAbierto((actual) => (
+      actual?.id === id
+        ? { ...actual, leGusta: resultado.leGusta, likes: resultado.totalMeGusta }
+        : actual
+    ))
+  }
+
+  const alternarLike = async (id) => {
+    const respuesta = await momentoService.alternarMeGusta(id)
+    if (!respuesta.exito || !respuesta.datos) return
+
+    actualizarMeGustaEnFeed(id, respuesta.datos)
+    if (respuesta.datos.leGusta) animarCorazon(id)
   }
 
   const darLikeConDobleClick = (id) => {
-    setLikesActivos((actual) => ({ ...actual, [id]: true }))
-    animarCorazon(id)
+    const post = feed.find((item) => item.id === id)
+    if (!post?.leGusta) alternarLike(id)
+    else animarCorazon(id)
   }
 
-  const totalLikes = (likes, activo) => {
-    const total = Number(likes.replace(/,/g, '')) + (activo ? 1 : 0)
-    return total.toLocaleString('en-US')
-  }
+  const totalLikes = (likes) => Number(likes || 0).toLocaleString('en-US')
 
   const publicarMomento = async () => {
     const texto = textoMomento.trim()
@@ -222,11 +229,11 @@ export default function Inicio() {
               <div className="post-actions">
                 <div>
                   <button
-                    className={likesActivos[post.id] ? 'liked' : ''}
-                    aria-label={likesActivos[post.id] ? 'Quitar me gusta' : 'Me gusta'}
+                    className={post.leGusta ? 'liked' : ''}
+                    aria-label={post.leGusta ? 'Quitar me gusta' : 'Me gusta'}
                     onClick={() => alternarLike(post.id)}
                   >
-                    {likesActivos[post.id] ? '♥' : '♡'}
+                    {post.leGusta ? '♥' : '♡'}
                   </button>
                   <button aria-label="Comentar">☰</button>
                   <button aria-label="Enviar">✉</button>
@@ -235,7 +242,7 @@ export default function Inicio() {
               </div>
 
               <div className="post-body">
-                <strong>{totalLikes(post.likes, likesActivos[post.id])} me gusta</strong>
+                <strong>{totalLikes(post.likes)} me gusta</strong>
                 <p><span>{post.usuario}</span> {post.pensamiento}</p>
                 {post.linkUrl && <a className="post-link" href={post.linkUrl} target="_blank" rel="noreferrer">Abrir enlace</a>}
                 <button className="comments-btn">Ver {post.comentarios} comentarios</button>
@@ -272,10 +279,10 @@ export default function Inicio() {
 
             <div className="story-modal-actions">
               <button
-                className={likesActivos[`estado-${estadoAbierto.id}`] ? 'liked' : ''}
-                onClick={() => alternarLike(`estado-${estadoAbierto.id}`)}
+                className={estadoAbierto.leGusta ? 'liked' : ''}
+                onClick={() => alternarLike(estadoAbierto.id)}
               >
-                {likesActivos[`estado-${estadoAbierto.id}`] ? '♥' : '♡'} Me gusta
+                {estadoAbierto.leGusta ? '♥' : '♡'} Me gusta
               </button>
               <input placeholder={`Responder a ${estadoAbierto.autor.split(' ')[0]} en privado...`} />
               <button>Enviar</button>

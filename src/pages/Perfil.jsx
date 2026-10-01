@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
 import { authService } from '../services/authService'
 import { momentoService } from '../services/momentoService'
+import { formatearFechaMomento } from '../utils/fechas'
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:5079/api').replace(/\/api\/?$/, '')
 
@@ -12,15 +13,6 @@ const normalizarMediaUrl = (url) => {
   if (!url) return ''
   if (/^https?:\/\//i.test(url)) return url
   return `${apiBaseUrl}${url.startsWith('/') ? url : `/${url}`}`
-}
-
-const tiempoRelativo = (fecha) => {
-  const diff = Date.now() - new Date(fecha).getTime()
-  const minutos = Math.max(1, Math.floor(diff / 60000))
-  if (minutos < 60) return `Hace ${minutos} min`
-  const horas = Math.floor(minutos / 60)
-  if (horas < 24) return `Hace ${horas} h`
-  return `Hace ${Math.floor(horas / 24)} d`
 }
 
 const mapearMomento = (momento) => ({
@@ -31,7 +23,8 @@ const mapearMomento = (momento) => ({
   linkUrl: momento.linkUrl,
   likes: momento.totalMeGusta ?? 0,
   comentarios: momento.totalComentarios ?? 0,
-  tiempo: tiempoRelativo(momento.fechaCreacion),
+  leGusta: Boolean(momento.leGusta),
+  tiempo: formatearFechaMomento(momento.fechaCreacion),
 })
 
 export default function Perfil() {
@@ -96,6 +89,27 @@ export default function Perfil() {
     observer.observe(nodo)
     return () => observer.disconnect()
   }, [cargarMomentos, cursor, tieneMas])
+
+  const alternarLike = async (idMomento) => {
+    const respuesta = await momentoService.alternarMeGusta(idMomento)
+    if (!respuesta.exito || !respuesta.datos) return
+
+    setMomentos((actuales) => actuales.map((momento) => (
+      momento.id === idMomento
+        ? { ...momento, likes: respuesta.datos.totalMeGusta, leGusta: respuesta.datos.leGusta }
+        : momento
+    )))
+
+    setPerfil((actual) => {
+      if (!actual) return actual
+      const momento = momentos.find((item) => item.id === idMomento)
+      const cambio = respuesta.datos.leGusta && !momento?.leGusta ? 1 : !respuesta.datos.leGusta && momento?.leGusta ? -1 : 0
+      return {
+        ...actual,
+        totalMeEncanta: Math.max(0, (actual.totalMeEncanta ?? 0) + cambio),
+      }
+    })
+  }
 
   return (
     <main className="app-shell">
@@ -178,7 +192,16 @@ export default function Perfil() {
                 <div>
                   <p>{momento.texto}</p>
                   {momento.linkUrl && <a href={momento.linkUrl} target="_blank" rel="noreferrer">Abrir enlace</a>}
-                  <strong>{momento.likes.toLocaleString('es-MX')} me encanta · {momento.tiempo}</strong>
+                  <div className="moment-card-meta">
+                    <button
+                      className={momento.leGusta ? 'liked' : ''}
+                      onClick={() => alternarLike(momento.id)}
+                      aria-label={momento.leGusta ? 'Quitar me encanta' : 'Me encanta'}
+                    >
+                      {momento.leGusta ? '♥' : '♡'}
+                    </button>
+                    <strong>{momento.likes.toLocaleString('es-MX')} me encanta · {momento.tiempo}</strong>
+                  </div>
                 </div>
               </article>
             ))}

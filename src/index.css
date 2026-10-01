@@ -1946,6 +1946,28 @@ pre {
   text-decoration: none;
 }
 
+.moment-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 !important;
+}
+
+.moment-card-meta button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111827;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.moment-card-meta button.liked {
+  color: #e11d48;
+  animation: likedPop .24s ease-out;
+}
+
 .moment-card-skeleton .skeleton-moment {
   min-height: 0;
   border-radius: 0;
