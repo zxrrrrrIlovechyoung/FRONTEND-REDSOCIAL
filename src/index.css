@@ -216,6 +216,74 @@ button { font: inherit; }
   color: var(--success);
 }
 
+.password-meter {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.password-meter span {
+  height: 4px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  transition: background .18s ease, transform .18s ease;
+}
+
+.password-meter strong {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.password-meter.nivel-1 span:nth-child(1) {
+  background: #ef4444;
+  transform: scaleY(1.12);
+}
+
+.password-meter.nivel-1 strong {
+  color: #ef4444;
+}
+
+.password-meter.nivel-2 span:nth-child(-n + 2) {
+  background: #fb7185;
+  transform: scaleY(1.12);
+}
+
+.password-meter.nivel-2 strong {
+  color: #fb7185;
+}
+
+.password-meter.nivel-3 span:nth-child(-n + 3) {
+  background: #f97316;
+  transform: scaleY(1.12);
+}
+
+.password-meter.nivel-3 strong {
+  color: #f97316;
+}
+
+.password-meter.nivel-4 span:nth-child(-n + 4) {
+  background: #22c55e;
+  transform: scaleY(1.12);
+}
+
+.password-meter.nivel-4 strong {
+  color: #16a34a;
+}
+
+.password-meter.nivel-5 span:nth-child(-n + 5) {
+  background: #0f766e;
+  transform: scaleY(1.12);
+}
+
+.password-meter.nivel-5 strong {
+  color: var(--success);
+}
+
 .steps {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

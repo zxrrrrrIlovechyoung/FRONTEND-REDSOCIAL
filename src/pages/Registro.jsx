@@ -10,6 +10,14 @@ const reglasPassword = [
   { id: 'mayuscula', texto: 'Al menos una mayúscula', valida: (valor) => /[A-ZÁÉÍÓÚÑ]/.test(valor) },
   { id: 'especial', texto: 'Al menos un carácter especial', valida: (valor) => /[^A-Za-z0-9ÁÉÍÓÚáéíóúÑñ]/.test(valor) },
 ]
+const reglasFuerzaPassword = [
+  (valor) => valor.length >= 8,
+  (valor) => /[a-záéíóúñ]/.test(valor),
+  (valor) => /[A-ZÁÉÍÓÚÑ]/.test(valor),
+  (valor) => /\d/.test(valor),
+  (valor) => /[^A-Za-z0-9ÁÉÍÓÚáéíóúÑñ]/.test(valor),
+]
+const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:5079/api'
 
 const calcularEdad = (fecha) => {
   if (!fecha) return 0
@@ -47,6 +55,26 @@ export default function Registro() {
     const timer = setTimeout(() => navigate('/login', { replace: true }), 2000)
     return () => clearTimeout(timer)
   }, [cuentaCreada, navigate])
+
+  useEffect(() => {
+    const debeLimpiar = paso > 1 && form.email.trim() && !cuentaCreada
+    if (!debeLimpiar) return undefined
+
+    const limpiarVerificacion = () => {
+      const payload = JSON.stringify({ email: form.email.trim() })
+      const blob = new Blob([payload], { type: 'application/json' })
+      navigator.sendBeacon?.(`${apiUrl}/auth/registro/cancelar-codigo`, blob)
+    }
+
+    const advertirSalida = (event) => {
+      limpiarVerificacion()
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', advertirSalida)
+    return () => window.removeEventListener('beforeunload', advertirSalida)
+  }, [cuentaCreada, form.email, paso])
 
   if (estaAutenticado) return <Navigate to="/" replace />
 
@@ -107,7 +135,11 @@ export default function Registro() {
 
   const noCoinciden = form.confirmar !== '' && form.password !== form.confirmar
   const edad = calcularEdad(form.fechaNacimiento)
-  const passwordCumple = reglasPassword.every((regla) => regla.valida(form.password))
+  const reglasCumplidas = reglasPassword.filter((regla) => regla.valida(form.password)).length
+  const passwordCumple = reglasCumplidas === reglasPassword.length
+  const passwordPerfecta = passwordCumple && form.confirmar !== '' && form.password === form.confirmar
+  const nivelPassword = form.password ? Math.max(1, reglasFuerzaPassword.filter((regla) => regla(form.password)).length) : 0
+  const textoNivelPassword = ['', 'Muy débil', 'Débil', 'Media', 'Buena', 'Segura'][nivelPassword]
   const bloquearPortapapeles = (e) => e.preventDefault()
 
   const validarPaso = (pasoActual) => {
@@ -295,6 +327,10 @@ export default function Registro() {
                     onCopy={bloquearPortapapeles} onCut={bloquearPortapapeles} onPaste={bloquearPortapapeles}
                   />
                   {(noCoinciden || errores.confirmar) && <span className="campo-error">{errores.confirmar || 'Las contraseñas no coinciden'}</span>}
+                  <div className={`password-meter nivel-${nivelPassword}`} aria-live="polite">
+                    {Array.from({ length: 5 }).map((_, index) => <span key={index} />)}
+                    {textoNivelPassword && <strong>{textoNivelPassword}</strong>}
+                  </div>
                   <ul className="password-rules" aria-label="Reglas de contraseña">
                     {reglasPassword.map((regla) => (
                       <li className={regla.valida(form.password) ? 'cumple' : ''} key={regla.id}>
@@ -346,7 +382,7 @@ export default function Registro() {
                 </button>
               )}
               {paso < 4 ? (
-                <button className="btn" type="button" onClick={siguiente} disabled={cargando || (paso === 2 && form.codigo.length < 6)}>
+                <button className="btn" type="button" onClick={siguiente} disabled={cargando || (paso === 2 && form.codigo.length < 6) || (paso === 3 && !passwordPerfecta)}>
                   {cargando ? <span className="spinner" /> : 'Continuar'}
                 </button>
               ) : (
