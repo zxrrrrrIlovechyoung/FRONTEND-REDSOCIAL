@@ -20,6 +20,9 @@ const llamar = async (peticion) => {
 
 export const authService = {
   login: (usuarioOEmail, password) => llamar(() => httpClient.post('/auth/login', { usuarioOEmail, password })),
+  solicitarCodigoEmail: (email) => llamar(() => httpClient.post('/auth/registro/solicitar-codigo', { email })),
+  verificarCodigoEmail: (email, codigo) => llamar(() => httpClient.post('/auth/registro/verificar-codigo', { email, codigo })),
+  cancelarCodigoEmail: (email) => llamar(() => httpClient.post('/auth/registro/cancelar-codigo', { email })),
   registrar: (datos) => llamar(() => httpClient.post('/auth/registro', datos)),
   perfil: () => llamar(() => httpClient.get('/auth/perfil')),
 }

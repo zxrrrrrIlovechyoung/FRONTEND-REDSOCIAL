@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 
 const menuModerador = [
@@ -21,6 +22,11 @@ const alertasSpam = [
 
 export default function Moderador() {
   const { usuario } = useAuth()
+  const [accionPendiente, setAccionPendiente] = useState(null)
+
+  const abrirAccion = (tipo, cuenta) => {
+    setAccionPendiente({ tipo, cuenta })
+  }
 
   return (
     <main className="moderator-shell">
@@ -94,8 +100,8 @@ export default function Moderador() {
                   <small className={cuenta.riesgo === 'Alto' ? 'risk-high' : ''}>{cuenta.riesgo}</small>
                   <div className="moderator-actions">
                     <button>Restringir</button>
-                    <button>Desactivar</button>
-                    <button className="danger-text">Eliminar</button>
+                    <button onClick={() => abrirAccion('desactivar', cuenta)}>Desactivar</button>
+                    <button className="danger-text" onClick={() => abrirAccion('eliminar', cuenta)}>Eliminar</button>
                   </div>
                 </article>
               ))}
@@ -121,6 +127,25 @@ export default function Moderador() {
           </section>
         </div>
       </section>
+
+      {accionPendiente && (
+        <div className="modal-backdrop" role="presentation">
+          <section className="confirm-modal moderation-confirm" role="dialog" aria-modal="true">
+            <h2>{accionPendiente.tipo === 'eliminar' ? 'Eliminar cuenta' : 'Desactivar cuenta'}</h2>
+            <p>
+              {accionPendiente.tipo === 'eliminar'
+                ? `¿Seguro que quieres eliminar la cuenta ${accionPendiente.cuenta.usuario}? Esta accion sera permanente.`
+                : `¿Seguro que quieres desactivar temporalmente la cuenta ${accionPendiente.cuenta.usuario}?`}
+            </p>
+            <div>
+              <button className="profile-btn" onClick={() => setAccionPendiente(null)}>Cancelar</button>
+              <button className={accionPendiente.tipo === 'eliminar' ? 'danger-btn' : 'warning-btn'} onClick={() => setAccionPendiente(null)}>
+                {accionPendiente.tipo === 'eliminar' ? 'Eliminar' : 'Desactivar'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   )
 }

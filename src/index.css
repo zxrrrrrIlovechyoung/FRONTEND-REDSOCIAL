@@ -190,9 +190,35 @@ button { font: inherit; }
 .campo-error { display: block; margin-top: 5px; font-size: 11px; color: var(--danger); }
 .campo-ayuda { display: block; margin-top: 6px; color: var(--muted); font-size: 11.5px; line-height: 1.35; }
 
+.password-rules {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.password-rules li {
+  padding-left: 2px;
+}
+
+.password-rules li::marker {
+  color: #cbd5e1;
+}
+
+.password-rules li.cumple {
+  color: var(--success);
+}
+
+.password-rules li.cumple::marker {
+  color: var(--success);
+}
+
 .steps {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 7px;
   margin-bottom: 26px;
 }
@@ -226,6 +252,14 @@ button { font: inherit; }
   grid-column: 1 / -1;
 }
 
+.registro-actions.solo-atras {
+  grid-template-columns: 1fr;
+}
+
+.registro-actions.solo-atras .btn-secundario {
+  width: 100%;
+}
+
 .btn-secundario {
   margin-top: 22px;
   padding: 11px 14px;
@@ -243,12 +277,128 @@ button { font: inherit; }
   cursor: not-allowed;
 }
 
+.btn-secundario .texto-suave {
+  color: var(--muted);
+  font-weight: 500;
+}
+
 .spinner {
   width: 14px; height: 14px; border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, .35); border-top-color: #fff;
   animation: giro .7s linear infinite;
 }
+.spinner.oscuro {
+  border-color: rgba(15, 23, 42, .16);
+  border-top-color: var(--blue);
+}
 @keyframes giro { to { transform: rotate(360deg); } }
+
+.codigo-campo {
+  position: relative;
+}
+
+.codigo-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.codigo-box {
+  width: 100%;
+  aspect-ratio: 1 / 1.12;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 19px;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+  transition: border-color .16s, box-shadow .16s, background .16s, color .16s, transform .16s;
+}
+
+.codigo-box:focus {
+  border-color: var(--blue);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(240, 90, 115, .12);
+}
+
+.codigo-box:disabled {
+  opacity: 1;
+}
+
+.codigo-validando .codigo-box {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.codigo-error .codigo-box {
+  border-color: var(--danger);
+  background: #fff1f2;
+  color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, .10);
+  animation: codeErrorPulse .38s ease var(--delay, 0ms) both;
+}
+
+.codigo-exito .codigo-box {
+  border-color: #5eead4;
+  background: #f0fdfa;
+  color: var(--success);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, .10);
+  animation: codeSuccessPulse .42s ease var(--delay, 0ms) both;
+}
+
+.codigo-status {
+  min-height: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@keyframes codeErrorPulse {
+  0% {
+    border-color: var(--border);
+    background: var(--bg);
+    color: var(--text);
+    transform: translateX(0);
+    box-shadow: none;
+  }
+  35% { transform: translateX(-3px); }
+  70% { transform: translateX(3px); }
+  100% {
+    border-color: var(--danger);
+    background: #fff1f2;
+    color: var(--danger);
+    transform: translateX(0);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, .10);
+  }
+}
+
+@keyframes codeSuccessPulse {
+  0% {
+    border-color: var(--border);
+    background: var(--bg);
+    color: var(--text);
+    transform: scale(1);
+    box-shadow: none;
+  }
+  55% {
+    transform: scale(1.045);
+    box-shadow: 0 0 0 4px rgba(20, 184, 166, .16);
+  }
+  100% {
+    border-color: #5eead4;
+    background: #f0fdfa;
+    color: var(--success);
+    transform: scale(1);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, .10);
+  }
+}
 
 .divisor { border-top: 1px solid var(--border); margin: 26px 0 18px; }
 .pie { margin: 0; text-align: center; font-size: 12.5px; color: var(--muted); }
@@ -2273,6 +2423,10 @@ pre {
 }
 
 .warning-btn {
+  background: #b45309;
+}
+
+.moderation-confirm .warning-btn {
   background: #b45309;
 }
 

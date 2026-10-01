@@ -23,6 +23,9 @@ export function AuthProvider({ children }) {
 
   // Registrar no inicia sesión: el usuario debe autenticarse después en el login.
   const registrar = (datos) => authService.registrar(datos)
+  const solicitarCodigoEmail = (email) => authService.solicitarCodigoEmail(email)
+  const verificarCodigoEmail = (email, codigo) => authService.verificarCodigoEmail(email, codigo)
+  const cancelarCodigoEmail = (email) => authService.cancelarCodigoEmail(email)
 
   const logout = () => {
     tokenStorage.limpiar()
@@ -30,7 +33,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ usuario, estaAutenticado: !!usuario, login, registrar, logout }}>
+    <AuthContext.Provider value={{ usuario, estaAutenticado: !!usuario, login, registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, logout }}>
       {children}
     </AuthContext.Provider>
   )
