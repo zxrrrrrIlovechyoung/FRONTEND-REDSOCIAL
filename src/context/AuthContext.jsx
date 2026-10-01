@@ -28,6 +28,9 @@ export function AuthProvider({ children }) {
   const cancelarCodigoEmail = useCallback((email) => authService.cancelarCodigoEmail(email), [])
   const verificarEmailDisponible = useCallback((email) => authService.verificarEmailDisponible(email), [])
   const verificarUsuarioDisponible = useCallback((nombreUsuario) => authService.verificarUsuarioDisponible(nombreUsuario), [])
+  const solicitarRecuperacionPassword = useCallback((email) => authService.solicitarRecuperacionPassword(email), [])
+  const verificarRecuperacionPassword = useCallback((email, codigo) => authService.verificarRecuperacionPassword(email, codigo), [])
+  const cambiarPassword = useCallback((email, recoveryToken, nuevaPassword) => authService.cambiarPassword(email, recoveryToken, nuevaPassword), [])
 
   const logout = useCallback(() => {
     tokenStorage.limpiar()
@@ -35,7 +38,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ usuario, estaAutenticado: !!usuario, login, registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, verificarEmailDisponible, verificarUsuarioDisponible, logout }}>
+    <AuthContext.Provider value={{ usuario, estaAutenticado: !!usuario, login, registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, verificarEmailDisponible, verificarUsuarioDisponible, solicitarRecuperacionPassword, verificarRecuperacionPassword, cambiarPassword, logout }}>
       {children}
     </AuthContext.Provider>
   )

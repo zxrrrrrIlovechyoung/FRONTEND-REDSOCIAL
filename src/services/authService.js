@@ -25,6 +25,9 @@ export const authService = {
   cancelarCodigoEmail: (email) => llamar(() => httpClient.post('/auth/registro/cancelar-codigo', { email })),
   verificarEmailDisponible: (email) => llamar(() => httpClient.get('/auth/registro/email-disponible', { params: { email } })),
   verificarUsuarioDisponible: (nombreUsuario) => llamar(() => httpClient.get(`/auth/registro/usuario-disponible/${encodeURIComponent(nombreUsuario)}`)),
+  solicitarRecuperacionPassword: (email) => llamar(() => httpClient.post('/auth/recuperar-password/solicitar-codigo', { email })),
+  verificarRecuperacionPassword: (email, codigo) => llamar(() => httpClient.post('/auth/recuperar-password/verificar-codigo', { email, codigo })),
+  cambiarPassword: (email, recoveryToken, nuevaPassword) => llamar(() => httpClient.post('/auth/recuperar-password/cambiar', { email, recoveryToken, nuevaPassword })),
   registrar: (datos) => llamar(() => httpClient.post('/auth/registro', datos)),
   perfil: () => llamar(() => httpClient.get('/auth/perfil')),
 }

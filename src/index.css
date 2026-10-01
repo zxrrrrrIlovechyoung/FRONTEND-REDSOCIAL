@@ -380,6 +380,10 @@ button { font: inherit; }
   background: linear-gradient(135deg, var(--blue), var(--brand-warm));
 }
 
+.steps.recuperar-steps {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .btn {
   width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
   margin-top: 22px; padding: 11px; border: 0; border-radius: 7px;
