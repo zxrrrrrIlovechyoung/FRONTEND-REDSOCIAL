@@ -5,6 +5,7 @@ import CampoPassword from '../components/CampoPassword'
 import { rutaInicialPorRol } from '../utils/rutasPorRol'
 
 const RECORDAR_USUARIO_KEY = 'moment_recordar_usuario'
+const dominiosEmail = ['gmail.com', 'hotmail.com']
 
 export default function Login() {
   const { login, estaAutenticado, usuario } = useAuth()
@@ -27,10 +28,26 @@ export default function Login() {
     setErrores(({ [e.target.name]: _, general: __, ...resto }) => resto)
   }
 
+  const alternarDominioEmail = (e) => {
+    if (e.key !== 'Enter') return
+    if (form.usuarioOEmail.includes('.') && form.usuarioOEmail.includes('@')) return
+
+    e.preventDefault()
+    const valor = form.usuarioOEmail.trim()
+    const [usuario, dominioActual = ''] = valor.split('@')
+    if (!usuario) return
+
+    const indiceActual = dominiosEmail.indexOf(dominioActual.toLowerCase())
+    const siguienteDominio = dominiosEmail[(indiceActual + 1) % dominiosEmail.length]
+    setForm({ ...form, usuarioOEmail: `${usuario}@${siguienteDominio}` })
+    setErrores(({ usuarioOEmail: _, general: __, ...resto }) => resto)
+  }
+
   const onSubmit = async (e) => {
     e.preventDefault()
     const nuevosErrores = {}
-    if (!form.usuarioOEmail.trim()) nuevosErrores.usuarioOEmail = 'El usuario o correo es obligatorio'
+    if (!form.usuarioOEmail.trim()) nuevosErrores.usuarioOEmail = 'El correo es obligatorio'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.usuarioOEmail.trim())) nuevosErrores.usuarioOEmail = 'Ingresa un correo válido'
     if (!form.password) nuevosErrores.password = 'La contraseña es obligatoria'
     setErrores(nuevosErrores)
     setIntentoFallido(Object.keys(nuevosErrores).length > 0)
@@ -80,8 +97,8 @@ export default function Login() {
               <div className="campo">
                 <input
                   className={`input${errores.usuarioOEmail ? ' invalido' : ''}`}
-                  name="usuarioOEmail" placeholder="Usuario o correo electrónico" aria-label="Usuario o correo electrónico"
-                  value={form.usuarioOEmail} onChange={onChange} autoComplete="username" maxLength={100} disabled={cargando}
+                  name="usuarioOEmail" type="email" placeholder="Correo electrónico" aria-label="Correo electrónico"
+                  value={form.usuarioOEmail} onChange={onChange} onKeyDown={alternarDominioEmail} autoComplete="email" maxLength={100} disabled={cargando}
                 />
                 {errores.usuarioOEmail && <span className="campo-error">{errores.usuarioOEmail}</span>}
               </div>
@@ -103,7 +120,7 @@ export default function Login() {
                     onChange={onChange}
                     disabled={cargando}
                   />
-                  <span>Recordar usuario</span>
+                  <span>Recordar correo</span>
                 </label>
                 <Link to="/recuperar-password">Olvidé mi contraseña</Link>
               </div>
