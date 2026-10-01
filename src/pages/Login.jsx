@@ -2,18 +2,28 @@ import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import CampoPassword from '../components/CampoPassword'
+import { rutaInicialPorRol } from '../utils/rutasPorRol'
+
+const RECORDAR_USUARIO_KEY = 'moment_recordar_usuario'
 
 export default function Login() {
   const { login, estaAutenticado, usuario } = useAuth()
   const navigate = useNavigate()
-  const [form, setForm] = useState({ usuarioOEmail: '', password: '' })
+  const [form, setForm] = useState({
+    usuarioOEmail: sessionStorage.getItem(RECORDAR_USUARIO_KEY) ?? '',
+    password: '',
+    recordarUsuario: Boolean(sessionStorage.getItem(RECORDAR_USUARIO_KEY)),
+  })
   const [errores, setErrores] = useState({})
   const [cargando, setCargando] = useState(false)
+  const [intentoFallido, setIntentoFallido] = useState(false)
 
-  if (estaAutenticado) return <Navigate to={['moderador', 'admin'].includes(usuario?.rol) ? '/moderador' : '/inicio'} replace />
+  if (estaAutenticado) return <Navigate to={rutaInicialPorRol(usuario?.rol)} replace />
 
   const onChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
+    setForm({ ...form, [e.target.name]: value })
+    setIntentoFallido(false)
     setErrores(({ [e.target.name]: _, general: __, ...resto }) => resto)
   }
 
@@ -23,16 +33,25 @@ export default function Login() {
     if (!form.usuarioOEmail.trim()) nuevosErrores.usuarioOEmail = 'El usuario o correo es obligatorio'
     if (!form.password) nuevosErrores.password = 'La contraseña es obligatoria'
     setErrores(nuevosErrores)
+    setIntentoFallido(Object.keys(nuevosErrores).length > 0)
     if (Object.keys(nuevosErrores).length > 0) return
 
     setCargando(true)
     const resultado = await login(form.usuarioOEmail, form.password)
     setCargando(false)
     if (resultado.exito) {
+      if (form.recordarUsuario) sessionStorage.setItem(RECORDAR_USUARIO_KEY, form.usuarioOEmail.trim())
+      else sessionStorage.removeItem(RECORDAR_USUARIO_KEY)
       const rol = resultado.datos?.rol ?? 'usuario'
-      navigate(['moderador', 'admin'].includes(rol) ? '/moderador' : '/inicio')
+      navigate(rutaInicialPorRol(rol))
     }
-    else setErrores({ password: resultado.mensaje })
+    else {
+      setIntentoFallido(true)
+      const mensaje = resultado.mensaje === 'Ups, algo salió mal. Inténtalo más tarde'
+        ? resultado.mensaje
+        : 'Usuario u contraseña incorrectas'
+      setErrores({ password: mensaje })
+    }
   }
 
   return (
@@ -57,7 +76,7 @@ export default function Login() {
             <h1 className="card-titulo">Bienvenido</h1>
             <p className="card-sub">Vuelve a tus momentos, chats y pensamientos favoritos.</p>
 
-            <form onSubmit={onSubmit} noValidate>
+            <form className={intentoFallido ? 'form-soft-error' : ''} onSubmit={onSubmit} noValidate>
               <div className="campo">
                 <input
                   className={`input${errores.usuarioOEmail ? ' invalido' : ''}`}
@@ -75,8 +94,22 @@ export default function Login() {
                 {errores.password && <span className="campo-error">{errores.password}</span>}
               </div>
 
+              <div className="login-options">
+                <label className="check-row">
+                  <input
+                    type="checkbox"
+                    name="recordarUsuario"
+                    checked={form.recordarUsuario}
+                    onChange={onChange}
+                    disabled={cargando}
+                  />
+                  <span>Recordar usuario</span>
+                </label>
+                <Link to="/recuperar-password">Olvidé mi contraseña</Link>
+              </div>
+
               <button className="btn" disabled={cargando}>
-                {cargando ? <span className="spinner" /> : 'Iniciar sesión'}
+                {cargando ? <><span className="spinner" /> Revisando acceso</> : 'Iniciar sesión'}
               </button>
             </form>
 

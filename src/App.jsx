@@ -4,6 +4,7 @@ import RutaProtegida from './routes/RutaProtegida'
 import RutaPorRol from './routes/RutaPorRol'
 import Login from './pages/Login'
 import Registro from './pages/Registro'
+import RecuperarPassword from './pages/RecuperarPassword'
 import InicioPublico from './pages/InicioPublico'
 import Inicio from './pages/Inicio'
 import Perfil from './pages/Perfil'
@@ -12,6 +13,7 @@ import Favoritos from './pages/Favoritos'
 import Configuracion from './pages/Configuracion'
 import Buscar from './pages/Buscar'
 import Moderador from './pages/Moderador'
+import Admin from './pages/Admin'
 
 export default function App() {
   return (
@@ -21,6 +23,7 @@ export default function App() {
           <Route path="/" element={<InicioPublico />} />
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
+          <Route path="/recuperar-password" element={<RecuperarPassword />} />
           <Route element={<RutaProtegida />}>
             <Route path="/inicio" element={<Inicio />} />
             <Route path="/perfil" element={<Perfil />} />
@@ -31,6 +34,9 @@ export default function App() {
           </Route>
           <Route element={<RutaPorRol rolesPermitidos={['moderador', 'admin']} />}>
             <Route path="/moderador" element={<Moderador />} />
+          </Route>
+          <Route element={<RutaPorRol rolesPermitidos={['admin']} />}>
+            <Route path="/admin" element={<Admin />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
