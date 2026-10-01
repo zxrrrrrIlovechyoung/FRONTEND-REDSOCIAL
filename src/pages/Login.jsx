@@ -109,7 +109,7 @@ export default function Login() {
               </div>
 
               <button className="btn" disabled={cargando}>
-                {cargando ? <><span className="spinner" /> Revisando acceso</> : 'Iniciar sesión'}
+                {cargando ? <span className="spinner" /> : 'Iniciar sesión'}
               </button>
             </form>
 
