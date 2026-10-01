@@ -30,4 +30,5 @@ export const authService = {
   cambiarPassword: (email, recoveryToken, nuevaPassword) => llamar(() => httpClient.post('/auth/recuperar-password/cambiar', { email, recoveryToken, nuevaPassword })),
   registrar: (datos) => llamar(() => httpClient.post('/auth/registro', datos)),
   perfil: () => llamar(() => httpClient.get('/auth/perfil')),
+  miPerfil: () => llamar(() => httpClient.get('/perfil/me')),
 }

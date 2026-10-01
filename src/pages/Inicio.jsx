@@ -1,97 +1,41 @@
 import { useEffect, useState } from 'react'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
+import { momentoService } from '../services/momentoService'
 
-const publicaciones = [
-  {
-    id: 1,
-    autor: 'Valeria Cruz',
-    usuario: '@vale.cruz',
-    avatar: 'VC',
-    tiempo: 'Hace 12 min',
-    imagen: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'Hay dias que solo necesitan luz bonita, buena musica y alguien con quien reirse sin mirar el reloj.',
-    likes: '1,284',
-    comentarios: '86',
-  },
-  {
-    id: 2,
-    autor: 'Mateo Rios',
-    usuario: '@mateorios',
-    avatar: 'MR',
-    tiempo: 'Hace 38 min',
-    imagen: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'Me gusta pensar que crecer tambien es aprender a caminar mas lento cuando algo vale la pena.',
-    likes: '943',
-    comentarios: '41',
-  },
-  {
-    id: 3,
-    autor: 'Camila Torres',
-    usuario: '@cami.t',
-    avatar: 'CT',
-    tiempo: 'Hace 1 h',
-    imagen: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'Un recuerdo no tiene que ser perfecto para quedarse contigo. A veces basta con que haya sido real.',
-    likes: '2,019',
-    comentarios: '132',
-  },
-  {
-    id: 4,
-    autor: 'Diego Luna',
-    usuario: '@diegoluna',
-    avatar: 'DL',
-    tiempo: 'Hace 2 h',
-    imagen: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'Entre tarea, amigos y planes que cambian, tambien estamos construyendo quienes queremos ser.',
-    likes: '718',
-    comentarios: '25',
-  },
-]
+const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:5079/api').replace(/\/api\/?$/, '')
 
-const estados = [
-  ...publicaciones,
-  {
-    id: 5,
-    autor: 'Sofia Marin',
-    usuario: '@sofia.m',
-    avatar: 'SM',
-    tiempo: 'Hace 3 h',
-    imagen: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'A veces una buena platica arregla mas que cualquier plan perfecto.',
-    likes: '512',
-  },
-  {
-    id: 6,
-    autor: 'Andres Vega',
-    usuario: '@andresv',
-    avatar: 'AV',
-    tiempo: 'Hace 4 h',
-    imagen: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'Hoy avance poquito, pero avance. Tambien cuenta.',
-    likes: '389',
-  },
-  {
-    id: 7,
-    autor: 'Lucia Gomez',
-    usuario: '@luciag',
-    avatar: 'LG',
-    tiempo: 'Hace 5 h',
-    imagen: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'Cielo bonito, audifonos puestos y cero prisa.',
-    likes: '841',
-  },
-  {
-    id: 8,
-    autor: 'Grupo 5A',
-    usuario: '@grupo.5a',
-    avatar: '5A',
-    tiempo: 'Hace 6 h',
-    imagen: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'Sobrevivimos otra semana de proyecto. Eso merece foto.',
-    likes: '1,006',
-  },
-]
+const normalizarMediaUrl = (url) => {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  return `${apiBaseUrl}${url.startsWith('/') ? url : `/${url}`}`
+}
+
+const inicialesDe = (texto) => (texto || 'MM').replace('@', '').slice(0, 2).toUpperCase()
+
+const tiempoRelativo = (fecha) => {
+  const diff = Date.now() - new Date(fecha).getTime()
+  const minutos = Math.max(1, Math.floor(diff / 60000))
+  if (minutos < 60) return `Hace ${minutos} min`
+  const horas = Math.floor(minutos / 60)
+  if (horas < 24) return `Hace ${horas} h`
+  return `Hace ${Math.floor(horas / 24)} d`
+}
+
+const mapearMomento = (momento) => ({
+  id: momento.idMomento,
+  autor: momento.autor || 'Moment',
+  usuario: momento.usuario || '@moment',
+  avatar: momento.avatar || inicialesDe(momento.autor || momento.usuario),
+  tiempo: tiempoRelativo(momento.fechaCreacion),
+  imagen: normalizarMediaUrl(momento.archivoUrl),
+  tipoAdjunto: momento.tipoAdjunto,
+  linkUrl: momento.linkUrl,
+  pensamiento: momento.texto,
+  likes: String(momento.totalMeGusta ?? 0),
+  comentarios: String(momento.totalComentarios ?? 0),
+  real: true,
+})
 
 export default function Inicio() {
   const [likesActivos, setLikesActivos] = useState({})
@@ -100,27 +44,54 @@ export default function Inicio() {
   const [crearAbierto, setCrearAbierto] = useState(false)
   const [tipoMomento, setTipoMomento] = useState('')
   const [previewMomento, setPreviewMomento] = useState('')
+  const [archivoMomento, setArchivoMomento] = useState(null)
   const [textoMomento, setTextoMomento] = useState('')
   const [linkMomento, setLinkMomento] = useState('')
+  const [feed, setFeed] = useState([])
+  const [cargandoFeed, setCargandoFeed] = useState(true)
+  const [publicando, setPublicando] = useState(false)
+  const [errorCrear, setErrorCrear] = useState('')
 
   const seleccionarArchivo = (e) => {
     const archivo = e.target.files?.[0]
     if (!archivo) return
+    setArchivoMomento(archivo)
     setPreviewMomento(URL.createObjectURL(archivo))
   }
 
   const cerrarCrearMomento = () => {
     setCrearAbierto(false)
     setPreviewMomento('')
+    setArchivoMomento(null)
     setTextoMomento('')
     setLinkMomento('')
     setTipoMomento('')
+    setErrorCrear('')
   }
 
   useEffect(() => {
     const abrirCrear = () => setCrearAbierto(true)
     window.addEventListener('abrir-crear-momento', abrirCrear)
     return () => window.removeEventListener('abrir-crear-momento', abrirCrear)
+  }, [])
+
+  useEffect(() => {
+    let activo = true
+
+    const cargarFeed = async () => {
+      setCargandoFeed(true)
+      const respuesta = await momentoService.feed()
+      if (!activo) return
+
+      setFeed(respuesta.exito ? (respuesta.datos ?? []).map(mapearMomento) : [])
+
+      setCargandoFeed(false)
+    }
+
+    cargarFeed()
+    return () => {
+      activo = false
+    }
   }, [])
 
   const animarCorazon = (id) => {
@@ -142,6 +113,42 @@ export default function Inicio() {
     return total.toLocaleString('en-US')
   }
 
+  const publicarMomento = async () => {
+    const texto = textoMomento.trim()
+    if (!texto) {
+      setErrorCrear('Cuéntanos qué quieres compartir.')
+      return
+    }
+
+    if ((tipoMomento === 'foto' || tipoMomento === 'video') && !archivoMomento) {
+      setErrorCrear(`Selecciona ${tipoMomento === 'foto' ? 'una foto' : 'un video'} para compartir.`)
+      return
+    }
+
+    setPublicando(true)
+    setErrorCrear('')
+
+    const respuesta = await momentoService.crear({
+      texto,
+      tipoAdjunto: tipoMomento,
+      archivo: archivoMomento,
+      linkUrl: linkMomento.trim(),
+    })
+
+    setPublicando(false)
+
+    if (!respuesta.exito) {
+      setErrorCrear(respuesta.mensaje || 'Ups, algo salió mal. Inténtalo más tarde')
+      return
+    }
+
+    if (respuesta.datos) {
+      setFeed((actual) => [mapearMomento(respuesta.datos), ...actual])
+    }
+
+    cerrarCrearMomento()
+  }
+
   return (
     <main className="app-shell">
       <AppSidebar activo="Inicio" />
@@ -155,17 +162,38 @@ export default function Inicio() {
           <button className="compose-btn" onClick={() => setCrearAbierto(true)}>Compartir</button>
         </div>
 
-        <div className="stories" aria-label="Historias">
-          {estados.map((post) => (
-            <button className="story" key={post.id} onClick={() => setEstadoAbierto(post)}>
-              <span>{post.avatar}</span>
-              <small>{post.autor.split(' ')[0]}</small>
-            </button>
-          ))}
-        </div>
+        {feed.length > 0 && (
+          <div className="stories" aria-label="Historias">
+            {feed.slice(0, 8).map((post) => (
+              <button className="story" key={post.id} onClick={() => setEstadoAbierto(post)}>
+                <span>{post.avatar}</span>
+                <small>{post.autor.split(' ')[0]}</small>
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="post-list">
-          {publicaciones.map((post) => (
+          {cargandoFeed && (
+            <article className="post-card feed-loading-card">
+              <div className="skeleton avatar" />
+              <div>
+                <div className="skeleton line wide" />
+                <div className="skeleton-moment" />
+              </div>
+            </article>
+          )}
+
+          {!cargandoFeed && feed.length === 0 && (
+            <section className="empty-feed">
+              <span>Moment</span>
+              <h2>Aún no hay momentos compartidos</h2>
+              <p>Sé la primera persona en compartir algo con tu escuela.</p>
+              <button onClick={() => setCrearAbierto(true)}>Crear momento</button>
+            </section>
+          )}
+
+          {feed.map((post) => (
             <article className="post-card" key={post.id}>
               <header className="post-top">
                 <div className="author">
@@ -179,7 +207,15 @@ export default function Inicio() {
               </header>
 
               <div className="post-image-wrap" onDoubleClick={() => darLikeConDobleClick(post.id)}>
-                <img className="post-image" src={post.imagen} alt={`Momento compartido por ${post.autor}`} />
+                {post.imagen ? (
+                  post.tipoAdjunto === 'video'
+                    ? <video className="post-image" src={post.imagen} controls />
+                    : <img className="post-image" src={post.imagen} alt={`Momento compartido por ${post.autor}`} />
+                ) : (
+                  <div className="post-image post-text-only">
+                    <p>{post.pensamiento}</p>
+                  </div>
+                )}
                 <span className="double-like-heart" key={corazonesAnimados[post.id] || 0}>♥</span>
               </div>
 
@@ -201,6 +237,7 @@ export default function Inicio() {
               <div className="post-body">
                 <strong>{totalLikes(post.likes, likesActivos[post.id])} me gusta</strong>
                 <p><span>{post.usuario}</span> {post.pensamiento}</p>
+                {post.linkUrl && <a className="post-link" href={post.linkUrl} target="_blank" rel="noreferrer">Abrir enlace</a>}
                 <button className="comments-btn">Ver {post.comentarios} comentarios</button>
               </div>
             </article>
@@ -223,7 +260,13 @@ export default function Inicio() {
             </header>
 
             <div className="story-modal-media">
-              <img src={estadoAbierto.imagen} alt={`Momento compartido por ${estadoAbierto.autor}`} />
+              {estadoAbierto.imagen ? (
+                estadoAbierto.tipoAdjunto === 'video'
+                  ? <video src={estadoAbierto.imagen} controls />
+                  : <img src={estadoAbierto.imagen} alt={`Momento compartido por ${estadoAbierto.autor}`} />
+              ) : (
+                <div className="story-text-only">{estadoAbierto.pensamiento}</div>
+              )}
               <p>{estadoAbierto.pensamiento}</p>
             </div>
 
@@ -275,6 +318,7 @@ export default function Inicio() {
                   onClick={() => {
                     setTipoMomento(tipoMomento === item.tipo ? '' : item.tipo)
                     setPreviewMomento('')
+                    setArchivoMomento(null)
                     setLinkMomento('')
                   }}
                   title={item.label}
@@ -309,7 +353,10 @@ export default function Inicio() {
             )}
 
             <div className="create-moment-actions">
-              <button onClick={cerrarCrearMomento}>Publicar momento</button>
+              {errorCrear && <span className="create-moment-error">{errorCrear}</span>}
+              <button onClick={publicarMomento} disabled={publicando}>
+                {publicando ? <span className="spinner" aria-hidden="true" /> : 'Publicar momento'}
+              </button>
             </div>
           </section>
         </div>

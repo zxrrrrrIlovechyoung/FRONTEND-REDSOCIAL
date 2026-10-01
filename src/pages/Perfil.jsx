@@ -1,40 +1,23 @@
+import { useEffect, useState } from 'react'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
 import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
-
-const momentos = [
-  {
-    id: 1,
-    imagen: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=900&q=80',
-    texto: 'Noche tranquila para ordenar ideas y volver a empezar con calma.',
-    likes: 328,
-  },
-  {
-    id: 2,
-    imagen: 'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&w=900&q=80',
-    texto: 'Entre apuntes, cafe y risas tambien pasan cosas que se quedan.',
-    likes: 214,
-  },
-  {
-    id: 3,
-    imagen: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80',
-    texto: 'Construyendo poquito a poquito lo que todavia solo vive en mi cabeza.',
-    likes: 487,
-  },
-  {
-    id: 4,
-    imagen: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=80',
-    texto: 'Hay lugares que bajan el ruido del dia sin decir nada.',
-    likes: 391,
-  },
-]
+import { authService } from '../services/authService'
 
 export default function Perfil() {
   const { usuario } = useAuth()
+  const [perfil, setPerfil] = useState(null)
   const nombre = usuario?.nombreUsuario || usuario?.usuario || 'Raul'
-  const usuarioPerfil = `@${String(nombre).toLowerCase()}`
-  const totalLikes = momentos.reduce((total, momento) => total + momento.likes, 0)
+  const usuarioPerfil = `@${String(perfil?.nombreUsuario || nombre).toLowerCase()}`
+
+  useEffect(() => {
+    let activo = true
+    authService.miPerfil().then((resultado) => {
+      if (activo && resultado.exito) setPerfil(resultado.datos)
+    })
+    return () => { activo = false }
+  }, [])
 
   return (
     <main className="app-shell">
@@ -48,7 +31,7 @@ export default function Perfil() {
               <p className="feed-kicker">Mi perfil</p>
               <div className="profile-title-row">
                 <div className="profile-name-line">
-                  <h1>{nombre}</h1>
+                  <h1>{perfil?.nombrePerfil || nombre}</h1>
                   <Link className="settings-btn" to="/configuracion" aria-label="Configuracion del perfil">⚙</Link>
                 </div>
                 <span>{usuarioPerfil}</span>
@@ -56,19 +39,19 @@ export default function Perfil() {
 
               <div className="profile-stats" aria-label="Estadisticas del perfil">
                 <div>
-                  <strong>1,248</strong>
+                  <strong>{(perfil?.seguidores ?? 0).toLocaleString('es-MX')}</strong>
                   <span>Seguidores</span>
                 </div>
                 <div>
-                  <strong>486</strong>
+                  <strong>{(perfil?.seguidos ?? 0).toLocaleString('es-MX')}</strong>
                   <span>Seguidos</span>
                 </div>
                 <div>
-                  <strong>{totalLikes.toLocaleString('es-MX')}</strong>
+                  <strong>{(perfil?.totalMeEncanta ?? 0).toLocaleString('es-MX')}</strong>
                   <span>Me encanta</span>
                 </div>
               </div>
-              <p>Compartiendo momentos, pensamientos y pequenas escenas de la vida escolar.</p>
+              <p>{perfil?.sobreMi || 'Compartiendo momentos, pensamientos y pequenas escenas de la vida escolar.'}</p>
               <div className="profile-actions">
                 <button className="profile-btn primary">Editar perfil</button>
                 <button className="profile-btn">Compartir perfil</button>
@@ -79,20 +62,13 @@ export default function Perfil() {
 
         <div className="profile-section-title">
           <h2>Momentos compartidos</h2>
-          <span>{momentos.length} publicaciones</span>
+          <span>0 publicaciones</span>
         </div>
 
-        <div className="profile-moments">
-          {momentos.map((momento) => (
-            <article className="moment-card" key={momento.id}>
-              <img src={momento.imagen} alt="Momento compartido por el usuario" />
-              <div>
-                <p>{momento.texto}</p>
-                <strong>{momento.likes.toLocaleString('es-MX')} me encanta</strong>
-              </div>
-            </article>
-          ))}
-        </div>
+        <section className="profile-empty-moments">
+          <h3>Aún no has compartido momentos</h3>
+          <p>Cuando publiques algo, aparecerá aquí ligado a tu perfil.</p>
+        </section>
       </section>
 
       <MessagesWidget />
