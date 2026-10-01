@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useCallback, useContext, useState } from 'react'
 import { authService } from '../services/authService'
 import { tokenStorage } from '../utils/tokenStorage'
 
@@ -12,28 +12,29 @@ export function AuthProvider({ children }) {
     setUsuario(tokenStorage.obtenerUsuario())
   }
 
-  const login = async (usuarioOEmail, password) => {
+  const login = useCallback(async (usuarioOEmail, password) => {
     const resultado = await authService.login(usuarioOEmail, password)
     if (resultado.exito) {
       iniciarSesion(resultado.datos)
       return { ...resultado, datos: tokenStorage.obtenerUsuario() }
     }
     return resultado
-  }
+  }, [])
 
   // Registrar no inicia sesión: el usuario debe autenticarse después en el login.
-  const registrar = (datos) => authService.registrar(datos)
-  const solicitarCodigoEmail = (email) => authService.solicitarCodigoEmail(email)
-  const verificarCodigoEmail = (email, codigo) => authService.verificarCodigoEmail(email, codigo)
-  const cancelarCodigoEmail = (email) => authService.cancelarCodigoEmail(email)
+  const registrar = useCallback((datos) => authService.registrar(datos), [])
+  const solicitarCodigoEmail = useCallback((email) => authService.solicitarCodigoEmail(email), [])
+  const verificarCodigoEmail = useCallback((email, codigo) => authService.verificarCodigoEmail(email, codigo), [])
+  const cancelarCodigoEmail = useCallback((email) => authService.cancelarCodigoEmail(email), [])
+  const verificarUsuarioDisponible = useCallback((nombreUsuario) => authService.verificarUsuarioDisponible(nombreUsuario), [])
 
-  const logout = () => {
+  const logout = useCallback(() => {
     tokenStorage.limpiar()
     setUsuario(null)
-  }
+  }, [])
 
   return (
-    <AuthContext.Provider value={{ usuario, estaAutenticado: !!usuario, login, registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, logout }}>
+    <AuthContext.Provider value={{ usuario, estaAutenticado: !!usuario, login, registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, verificarUsuarioDisponible, logout }}>
       {children}
     </AuthContext.Provider>
   )

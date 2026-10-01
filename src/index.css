@@ -171,7 +171,16 @@ button { font: inherit; }
   font-weight: 700;
   pointer-events: none;
 }
-.username-field .input { padding-left: 30px; }
+.username-field .input { padding-left: 30px; padding-right: 38px; }
+.field-spinner {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
 .input {
   width: 100%; padding: 12px 13px; border: 1px solid var(--border); border-radius: 7px;
   font: inherit; font-size: 13.5px; color: var(--text); background: var(--bg); outline: none;
@@ -189,6 +198,10 @@ button { font: inherit; }
 .toggle-pwd:hover { opacity: .9; }
 .campo-error { display: block; margin-top: 5px; font-size: 11px; color: var(--danger); }
 .campo-ayuda { display: block; margin-top: 6px; color: var(--muted); font-size: 11.5px; line-height: 1.35; }
+.estado-usuario.disponible { color: var(--success); font-weight: 700; }
+.estado-usuario.ocupado,
+.estado-usuario.invalido { color: var(--danger); font-weight: 700; }
+.estado-usuario.verificando { color: var(--muted); }
 
 .password-rules {
   display: grid;

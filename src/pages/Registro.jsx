@@ -30,7 +30,7 @@ const calcularEdad = (fecha) => {
 }
 
 export default function Registro() {
-  const { registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, estaAutenticado } = useAuth()
+  const { registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, verificarUsuarioDisponible, estaAutenticado } = useAuth()
   const navigate = useNavigate()
   const [paso, setPaso] = useState(1)
   const [form, setForm] = useState({
@@ -46,6 +46,7 @@ export default function Registro() {
   const [errores, setErrores] = useState({})
   const [cargando, setCargando] = useState(false)
   const [estadoCodigo, setEstadoCodigo] = useState('idle')
+  const [estadoUsuario, setEstadoUsuario] = useState('idle')
   const [correoVerificado, setCorreoVerificado] = useState(false)
   const [cuentaCreada, setCuentaCreada] = useState(false)
   const codigoRefs = useRef([])
@@ -75,6 +76,35 @@ export default function Registro() {
     window.addEventListener('beforeunload', advertirSalida)
     return () => window.removeEventListener('beforeunload', advertirSalida)
   }, [cuentaCreada, form.email, paso])
+
+  useEffect(() => {
+    if (paso !== 4) return undefined
+
+    const nombre = form.nombreUsuario.trim()
+    if (!nombre) {
+      setEstadoUsuario('idle')
+      return undefined
+    }
+
+    if (nombre.length < 3 || !/^[a-zA-Z0-9_.]+$/.test(nombre) || !nombre.includes('_')) {
+      setEstadoUsuario('invalido')
+      return undefined
+    }
+
+    let cancelado = false
+    setEstadoUsuario('verificando')
+
+    const timer = window.setTimeout(async () => {
+      const resultado = await verificarUsuarioDisponible(nombre)
+      if (cancelado) return
+      setEstadoUsuario(resultado.exito && resultado.datos?.disponible ? 'disponible' : 'ocupado')
+    }, 450)
+
+    return () => {
+      cancelado = true
+      window.clearTimeout(timer)
+    }
+  }, [form.nombreUsuario, paso, verificarUsuarioDisponible])
 
   if (estaAutenticado) return <Navigate to="/" replace />
 
@@ -168,6 +198,8 @@ export default function Registro() {
       if (!form.nombrePerfil.trim()) nuevosErrores.nombrePerfil = 'El nombre de perfil es obligatorio'
       if (!form.nombreUsuario.trim()) nuevosErrores.nombreUsuario = 'El nombre de usuario es obligatorio'
       else if (form.nombreUsuario.trim().length < 3) nuevosErrores.nombreUsuario = 'Debe tener al menos 3 caracteres'
+      else if (!form.nombreUsuario.includes('_')) nuevosErrores.nombreUsuario = 'Debe incluir al menos un guion bajo'
+      else if (estadoUsuario !== 'disponible') nuevosErrores.nombreUsuario = 'Elige un usuario disponible'
     }
 
     setErrores(nuevosErrores)
@@ -210,6 +242,15 @@ export default function Registro() {
       return
     }
 
+    if (paso === 3) {
+      setCargando(true)
+      window.setTimeout(() => {
+        setCargando(false)
+        setPaso(4)
+      }, 320)
+      return
+    }
+
     setPaso((actual) => Math.min(actual + 1, 4))
   }
 
@@ -247,6 +288,14 @@ export default function Registro() {
     if (resultado.exito) setCuentaCreada(true)
     else setErrores({ nombreUsuario: resultado.mensaje })
   }
+
+  const textoEstadoUsuario = {
+    idle: 'Escribe tu @usuario.',
+    verificando: 'Comprobando disponibilidad...',
+    disponible: 'Usuario disponible',
+    ocupado: 'Usuario no disponible',
+    invalido: 'Usa letras, números, punto y al menos un guion bajo',
+  }[estadoUsuario]
 
   return (
     <main className="auth">
@@ -365,11 +414,12 @@ export default function Registro() {
                   <div className="username-field">
                     <span>@</span>
                     <input
-                      className={`input${errores.nombreUsuario ? ' invalido' : ''}`} name="nombreUsuario" placeholder="usuario" aria-label="Nombre de usuario único"
+                      className={`input${errores.nombreUsuario || estadoUsuario === 'ocupado' || estadoUsuario === 'invalido' ? ' invalido' : ''}`} name="nombreUsuario" placeholder="usuario" aria-label="Nombre de usuario único"
                       value={form.nombreUsuario} onChange={onChange} minLength={3} maxLength={30} disabled={cargando}
                     />
+                    {estadoUsuario === 'verificando' && <span className="field-spinner"><span className="spinner oscuro" /></span>}
                   </div>
-                  <span className="campo-ayuda">Este será tu @usuario y debe ser único.</span>
+                  <span className={`campo-ayuda estado-usuario ${estadoUsuario}`}>{textoEstadoUsuario}</span>
                   {errores.nombreUsuario && <span className="campo-error">{errores.nombreUsuario}</span>}
                 </div>
               </>
@@ -386,7 +436,7 @@ export default function Registro() {
                   {cargando ? <span className="spinner" /> : 'Continuar'}
                 </button>
               ) : (
-                <button className="btn" disabled={cargando}>
+                <button className="btn" disabled={cargando || estadoUsuario !== 'disponible'}>
                   {cargando ? <span className="spinner" /> : 'Crear cuenta'}
                 </button>
               )}
