@@ -145,7 +145,9 @@ export default function RecuperarPassword() {
                 <span className="campo-ayuda">Ingresa solo los 6 números del correo.</span>
               </div>
               <div className="registro-actions">
-                <button className="btn-secundario" type="button" onClick={() => setPaso(1)} disabled={cargando}>Cambiar correo</button>
+                <button className="btn-secundario" type="button" onClick={() => setPaso(1)} disabled={cargando}>
+                  <span className="texto-suave">Cambiar correo</span>
+                </button>
                 <button className="btn" disabled={cargando || form.codigo.length < 6}>{cargando ? <span className="spinner" /> : 'Continuar'}</button>
               </div>
             </form>
