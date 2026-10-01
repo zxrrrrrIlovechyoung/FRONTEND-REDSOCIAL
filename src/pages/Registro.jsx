@@ -29,6 +29,12 @@ const calcularEdad = (fecha) => {
   return edad
 }
 
+const fechaMaximaNacimiento = () => {
+  const fecha = new Date()
+  fecha.setFullYear(fecha.getFullYear() - edadMinima)
+  return fecha.toISOString().slice(0, 10)
+}
+
 export default function Registro() {
   const { registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, verificarUsuarioDisponible, estaAutenticado } = useAuth()
   const navigate = useNavigate()
@@ -38,7 +44,7 @@ export default function Registro() {
     codigo: '',
     password: '',
     confirmar: '',
-    fechaNacimiento: '',
+    fechaNacimiento: fechaMaximaNacimiento(),
     nombrePerfil: '',
     nombreUsuario: '',
   })
@@ -397,7 +403,7 @@ export default function Registro() {
                 <input
                   className={`input${errores.fechaNacimiento || (form.fechaNacimiento && edad < edadMinima) ? ' invalido' : ''}`}
                   name="fechaNacimiento" type="date" aria-label="Fecha de nacimiento"
-                  value={form.fechaNacimiento} onChange={onChange} disabled={cargando}
+                  value={form.fechaNacimiento} onChange={onChange} max={fechaMaximaNacimiento()} disabled={cargando}
                 />
                 <span className="campo-ayuda">Debes tener al menos 12 años para usar Moment.</span>
                 {errores.fechaNacimiento && <span className="campo-error">{errores.fechaNacimiento}</span>}

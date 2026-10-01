@@ -6,7 +6,7 @@ const mensajeDeError = (error) => {
   if (data?.mensaje) return data.mensaje
   if (data?.errors) return Object.values(data.errors).flat().join(' ')
   if (error.response?.status === 429) return 'Demasiados intentos. Espera un minuto.'
-  return 'No se pudo conectar con el servidor'
+  return 'Ups, algo salió mal. Inténtalo más tarde'
 }
 
 const llamar = async (peticion) => {
