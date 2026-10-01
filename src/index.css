@@ -1895,12 +1895,30 @@ pre {
   background: #fff;
 }
 
-.moment-card img {
+.moment-card img,
+.moment-card video,
+.moment-text-preview {
   display: block;
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
   background: #f1f5f9;
+}
+
+.moment-card video {
+  background: #020617;
+}
+
+.moment-text-preview {
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: linear-gradient(135deg, #fff7ed, #fff);
+  color: #111827;
+  font-size: 18px;
+  font-weight: 850;
+  line-height: 1.25;
+  text-align: center;
 }
 
 .moment-card div {
@@ -1917,6 +1935,29 @@ pre {
 .moment-card strong {
   color: #111827;
   font-size: 13px;
+}
+
+.moment-card a {
+  display: inline-block;
+  margin: 0 0 8px;
+  color: #fb7185;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.moment-card-skeleton .skeleton-moment {
+  min-height: 0;
+  border-radius: 0;
+  aspect-ratio: 4 / 3;
+}
+
+.moment-card-skeleton .skeleton.line {
+  margin-bottom: 8px;
+}
+
+.profile-load-sentinel {
+  height: 1px;
 }
 
 .profile-empty-moments {

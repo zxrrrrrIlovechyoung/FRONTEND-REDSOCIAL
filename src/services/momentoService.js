@@ -18,6 +18,9 @@ const llamar = async (peticion) => {
 
 export const momentoService = {
   feed: () => llamar(() => httpClient.get('/momentos')),
+  misMomentos: ({ cursor, cantidad = 30 } = {}) => llamar(() => httpClient.get('/momentos/me', {
+    params: { cursor, cantidad },
+  })),
   crear: ({ texto, tipoAdjunto, archivo, linkUrl }) => {
     const formData = new FormData()
     formData.append('texto', texto)
