@@ -143,9 +143,9 @@ export default function Perfil() {
                   <span>Me encanta</span>
                 </div>
               </div>
-              <p>{perfil?.sobreMi || 'Compartiendo momentos, pensamientos y pequenas escenas de la vida escolar.'}</p>
+              <p className="profile-about">{perfil?.sobreMi || 'Sin descripción todavía.'}</p>
               <div className="profile-actions">
-                <button className="profile-btn primary">Editar perfil</button>
+                <Link className="profile-btn primary" to="/perfil/editar">Editar perfil</Link>
                 <button className="profile-btn">Compartir perfil</button>
               </div>
             </div>

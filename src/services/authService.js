@@ -31,4 +31,5 @@ export const authService = {
   registrar: (datos) => llamar(() => httpClient.post('/auth/registro', datos)),
   perfil: () => llamar(() => httpClient.get('/auth/perfil')),
   miPerfil: () => llamar(() => httpClient.get('/perfil/me')),
+  actualizarSobreMi: (sobreMi) => llamar(() => httpClient.put('/perfil/sobre-mi', { sobreMi })),
 }

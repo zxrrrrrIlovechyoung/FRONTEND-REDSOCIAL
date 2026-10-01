@@ -1831,7 +1831,7 @@ pre {
   font-weight: 650;
 }
 
-.profile-info p:last-child {
+.profile-about {
   max-width: 460px;
   margin: 14px 0 0;
   color: #334155;
@@ -1846,6 +1846,8 @@ pre {
 }
 
 .profile-btn {
+  display: inline-grid;
+  place-items: center;
   padding: 10px 14px;
   border: 1px solid #e5e7eb;
   border-radius: 7px;
@@ -1853,7 +1855,13 @@ pre {
   color: #111827;
   font-size: 13px;
   font-weight: 800;
+  text-decoration: none;
   cursor: pointer;
+}
+
+.profile-btn:disabled {
+  cursor: wait;
+  opacity: .78;
 }
 
 .profile-btn.primary {
@@ -2005,6 +2013,137 @@ pre {
   color: #64748b;
   font-size: 13px;
   line-height: 1.5;
+}
+
+.edit-profile-page {
+  width: min(760px, calc(100vw - 340px));
+  margin: 28px auto;
+}
+
+.edit-profile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.edit-profile-head h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 30px;
+}
+
+.edit-profile-panel {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.edit-profile-preview {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 18px 12px;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  background: #fbfbfd;
+  text-align: center;
+}
+
+.edit-profile-preview strong,
+.edit-profile-preview span {
+  display: block;
+}
+
+.edit-profile-preview strong {
+  color: #111827;
+  font-size: 16px;
+}
+
+.edit-profile-preview span {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.edit-profile-form {
+  min-width: 0;
+}
+
+.edit-profile-form label {
+  display: block;
+  margin-bottom: 8px;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.edit-profile-textarea {
+  position: relative;
+}
+
+.edit-profile-textarea textarea {
+  width: 100%;
+  min-height: 150px;
+  resize: vertical;
+  padding: 12px 12px 30px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  outline: none;
+  color: #111827;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.edit-profile-textarea textarea:focus {
+  border-color: #111827;
+}
+
+.edit-profile-textarea small {
+  position: absolute;
+  right: 11px;
+  bottom: 9px;
+  color: #94a3b8;
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.profile-form-error,
+.profile-form-success {
+  margin: 9px 0 0;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.profile-form-error {
+  color: #ef4444;
+}
+
+.profile-form-success {
+  color: #16a34a;
+}
+
+.edit-profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.edit-profile-actions .profile-btn {
+  min-width: 142px;
+  min-height: 39px;
+}
+
+.edit-profile-skeleton {
+  display: grid;
+  gap: 12px;
 }
 
 .messages-page {

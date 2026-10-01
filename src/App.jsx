@@ -8,6 +8,7 @@ import RecuperarPassword from './pages/RecuperarPassword'
 import InicioPublico from './pages/InicioPublico'
 import Inicio from './pages/Inicio'
 import Perfil from './pages/Perfil'
+import EditarPerfil from './pages/EditarPerfil'
 import Mensajes from './pages/Mensajes'
 import Favoritos from './pages/Favoritos'
 import Configuracion from './pages/Configuracion'
@@ -27,6 +28,7 @@ export default function App() {
           <Route element={<RutaProtegida />}>
             <Route path="/inicio" element={<Inicio />} />
             <Route path="/perfil" element={<Perfil />} />
+            <Route path="/perfil/editar" element={<EditarPerfil />} />
             <Route path="/mensajes" element={<Mensajes />} />
             <Route path="/favoritos" element={<Favoritos />} />
             <Route path="/configuracion" element={<Configuracion />} />
