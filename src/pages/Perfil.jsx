@@ -260,6 +260,7 @@ export default function Perfil() {
     }
 
     setPerfil(resultado.datos)
+    window.dispatchEvent(new Event('perfil-actualizado'))
     setPopExito('Foto de perfil actualizada')
     window.setTimeout(() => setPopExito(''), 1900)
     cerrarModalFoto()

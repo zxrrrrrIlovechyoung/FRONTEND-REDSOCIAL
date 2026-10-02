@@ -2,6 +2,14 @@ import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 
+const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:5079/api').replace(/\/api\/?$/, '')
+
+const normalizarMediaUrl = (url) => {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  return `${apiBaseUrl}${url.startsWith('/') ? url : `/${url}`}`
+}
+
 const herramientas = [
   { icono: '⌂', texto: 'Inicio', ruta: '/inicio' },
   { icono: '⌕', texto: 'Buscar', ruta: '/buscar' },
@@ -11,9 +19,11 @@ const herramientas = [
 ]
 
 export default function AppSidebar({ activo = 'Inicio' }) {
-  const { usuario } = useAuth()
+  const { usuario, perfilActual } = useAuth()
   const [sidebarContraido, setSidebarContraido] = useState(false)
-  const nombre = usuario?.nombreUsuario || usuario?.usuario || 'Raul'
+  const nombre = perfilActual?.nombrePerfil || usuario?.nombrePerfil || usuario?.nombreUsuario || usuario?.usuario || 'Raul'
+  const nombreUsuario = perfilActual?.nombreUsuario || usuario?.nombreUsuario || usuario?.usuario || nombre
+  const fotoPerfilUrl = normalizarMediaUrl(perfilActual?.fotoPerfilUrl)
   const rol = usuario?.rol ?? 'usuario'
   const herramientasVisibles = ['moderador', 'admin'].includes(rol)
     ? [...herramientas, { icono: '!', texto: 'Moderador', ruta: '/moderador' }]
@@ -69,10 +79,12 @@ export default function AppSidebar({ activo = 'Inicio' }) {
       </div>
 
       <Link className="profile-mini" to="/perfil">
-        <div className="profile-avatar">{nombre.slice(0, 2).toUpperCase()}</div>
+        <div className="profile-avatar">
+          {fotoPerfilUrl ? <img src={fotoPerfilUrl} alt="Foto de perfil" /> : nombre.slice(0, 2).toUpperCase()}
+        </div>
         <div className="profile-copy">
           <strong>{nombre}</strong>
-          <span>@{String(nombre).toLowerCase()}</span>
+          <span>@{String(nombreUsuario).toLowerCase()}</span>
         </div>
       </Link>
     </aside>

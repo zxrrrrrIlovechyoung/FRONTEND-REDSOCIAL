@@ -22,6 +22,7 @@ export const momentoService = {
     params: { cursor, cantidad },
   })),
   alternarMeGusta: (idMomento) => llamar(() => httpClient.post(`/momentos/${idMomento}/me-encanta`)),
+  eliminar: (idMomento) => llamar(() => httpClient.delete(`/momentos/${idMomento}`)),
   crear: ({ texto, tipoAdjunto, archivo, linkUrl }) => {
     const formData = new FormData()
     formData.append('texto', texto)

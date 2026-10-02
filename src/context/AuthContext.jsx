@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { authService } from '../services/authService'
 import { tokenStorage } from '../utils/tokenStorage'
 
@@ -6,6 +6,7 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(tokenStorage.obtenerUsuario)
+  const [perfilActual, setPerfilActual] = useState(null)
 
   const iniciarSesion = (datos) => {
     tokenStorage.guardar(datos)
@@ -21,6 +22,32 @@ export function AuthProvider({ children }) {
     return resultado
   }, [])
 
+  const refrescarPerfil = useCallback(async () => {
+    if (!tokenStorage.obtener()) {
+      setPerfilActual(null)
+      return null
+    }
+
+    const resultado = await authService.miPerfil()
+    if (resultado.exito) {
+      setPerfilActual(resultado.datos)
+      return resultado.datos
+    }
+
+    return null
+  }, [])
+
+  useEffect(() => {
+    if (usuario) refrescarPerfil()
+    else setPerfilActual(null)
+  }, [usuario, refrescarPerfil])
+
+  useEffect(() => {
+    const actualizar = () => refrescarPerfil()
+    window.addEventListener('perfil-actualizado', actualizar)
+    return () => window.removeEventListener('perfil-actualizado', actualizar)
+  }, [refrescarPerfil])
+
   // Registrar no inicia sesión: el usuario debe autenticarse después en el login.
   const registrar = useCallback((datos) => authService.registrar(datos), [])
   const solicitarCodigoEmail = useCallback((email) => authService.solicitarCodigoEmail(email), [])
@@ -35,10 +62,11 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     tokenStorage.limpiar()
     setUsuario(null)
+    setPerfilActual(null)
   }, [])
 
   return (
-    <AuthContext.Provider value={{ usuario, estaAutenticado: !!usuario, login, registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, verificarEmailDisponible, verificarUsuarioDisponible, solicitarRecuperacionPassword, verificarRecuperacionPassword, cambiarPassword, logout }}>
+    <AuthContext.Provider value={{ usuario, perfilActual, refrescarPerfil, estaAutenticado: !!usuario, login, registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, verificarEmailDisponible, verificarUsuarioDisponible, solicitarRecuperacionPassword, verificarRecuperacionPassword, cambiarPassword, logout }}>
       {children}
     </AuthContext.Provider>
   )

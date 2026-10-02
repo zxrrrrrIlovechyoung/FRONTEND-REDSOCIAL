@@ -110,6 +110,7 @@ export default function EditarPerfil() {
     }
 
     setPerfil(resultado.datos)
+    window.dispatchEvent(new Event('perfil-actualizado'))
     setNombrePerfil(resultado.datos?.nombrePerfil ?? '')
     setMensaje('Nombre de perfil actualizado.')
   }
@@ -129,6 +130,7 @@ export default function EditarPerfil() {
     }
 
     setPerfil(resultado.datos)
+    window.dispatchEvent(new Event('perfil-actualizado'))
     setNombreUsuario(resultado.datos?.nombreUsuario ?? '')
     setMensaje('Usuario actualizado.')
   }
@@ -268,6 +270,7 @@ export default function EditarPerfil() {
     }
 
     setPerfil(resultado.datos)
+    window.dispatchEvent(new Event('perfil-actualizado'))
     setPopExito('Foto de perfil actualizada')
     window.setTimeout(() => setPopExito(''), 1900)
     cerrarModalFoto()

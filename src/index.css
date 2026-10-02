@@ -815,10 +815,19 @@ pre {
 .author-avatar {
   display: grid;
   place-items: center;
+  overflow: hidden;
   border-radius: 50%;
   background: linear-gradient(135deg, #ff4f79, #ffb703);
   color: #fff;
   font-weight: 800;
+}
+
+.profile-avatar img,
+.author-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 
 .profile-avatar {
@@ -1284,6 +1293,85 @@ pre {
   color: #475569;
   font-weight: 800;
   letter-spacing: 1px;
+}
+
+.post-more {
+  position: relative;
+}
+
+.post-more-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 4;
+  min-width: 164px;
+  padding: 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, .12);
+}
+
+.post-more-menu button {
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #e11d48;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.post-more-menu button:hover {
+  background: #fff1f2;
+}
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, .28);
+}
+
+.confirm-modal {
+  width: min(360px, 100%);
+  padding: 22px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, .22);
+}
+
+.confirm-modal h2 {
+  margin: 0 0 9px;
+  color: #111827;
+  font-size: 22px;
+}
+
+.confirm-modal p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.confirm-modal > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.profile-btn.danger {
+  border-color: #e11d48;
+  background: #e11d48;
+  color: #fff;
 }
 
 .favorite-badge {

@@ -43,6 +43,9 @@ export default function Inicio() {
   const [cargandoFeed, setCargandoFeed] = useState(true)
   const [publicando, setPublicando] = useState(false)
   const [errorCrear, setErrorCrear] = useState('')
+  const [menuPostAbierto, setMenuPostAbierto] = useState(null)
+  const [momentoAEliminar, setMomentoAEliminar] = useState(null)
+  const [eliminandoMomento, setEliminandoMomento] = useState(false)
 
   const seleccionarArchivo = (e) => {
     const archivo = e.target.files?.[0]
@@ -119,6 +122,21 @@ export default function Inicio() {
   }
 
   const totalLikes = (likes) => Number(likes || 0).toLocaleString('en-US')
+
+  const confirmarEliminarMomento = async () => {
+    if (!momentoAEliminar) return
+
+    setEliminandoMomento(true)
+    const respuesta = await momentoService.eliminar(momentoAEliminar.id)
+    setEliminandoMomento(false)
+
+    if (!respuesta.exito) return
+
+    setFeed((actual) => actual.filter((post) => post.id !== momentoAEliminar.id))
+    setEstadoAbierto((actual) => actual?.id === momentoAEliminar.id ? null : actual)
+    setMomentoAEliminar(null)
+    setMenuPostAbierto(null)
+  }
 
   const publicarMomento = async () => {
     const texto = textoMomento.trim()
@@ -210,7 +228,25 @@ export default function Inicio() {
                     <span>{post.usuario} · {post.tiempo}</span>
                   </div>
                 </div>
-                <button className="more-btn" aria-label="Mas opciones">•••</button>
+                <div className="post-more">
+                  <button
+                    className="more-btn"
+                    aria-label="Mas opciones"
+                    onClick={() => setMenuPostAbierto((actual) => actual === post.id ? null : post.id)}
+                  >
+                    •••
+                  </button>
+                  {menuPostAbierto === post.id && (
+                    <div className="post-more-menu">
+                      <button onClick={() => {
+                        setMomentoAEliminar(post)
+                        setMenuPostAbierto(null)
+                      }}>
+                        Eliminar momento
+                      </button>
+                    </div>
+                  )}
+                </div>
               </header>
 
               <div className="post-image-wrap" onDoubleClick={() => darLikeConDobleClick(post.id)}>
@@ -286,6 +322,21 @@ export default function Inicio() {
               </button>
               <input placeholder={`Responder a ${estadoAbierto.autor.split(' ')[0]} en privado...`} />
               <button>Enviar</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {momentoAEliminar && (
+        <div className="confirm-backdrop" role="presentation" onClick={() => setMomentoAEliminar(null)}>
+          <section className="confirm-modal" role="dialog" aria-modal="true" aria-label="Eliminar momento" onClick={(e) => e.stopPropagation()}>
+            <h2>Eliminar momento</h2>
+            <p>Este momento dejará de verse ahora, pero se conservará en auditoría durante 30 días antes de eliminarse definitivamente.</p>
+            <div>
+              <button className="profile-btn" onClick={() => setMomentoAEliminar(null)} disabled={eliminandoMomento}>Cancelar</button>
+              <button className="profile-btn danger" onClick={confirmarEliminarMomento} disabled={eliminandoMomento}>
+                {eliminandoMomento ? <span className="spinner" aria-hidden="true" /> : 'Eliminar'}
+              </button>
             </div>
           </section>
         </div>
