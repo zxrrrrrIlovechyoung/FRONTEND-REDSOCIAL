@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
+import SuccessPop from '../components/SuccessPop'
 import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
 import { authService } from '../services/authService'
@@ -43,6 +44,7 @@ export default function Perfil() {
   const [offsetFoto, setOffsetFoto] = useState({ x: 0, y: 0 })
   const [guardandoFoto, setGuardandoFoto] = useState(false)
   const [errorFoto, setErrorFoto] = useState('')
+  const [popExito, setPopExito] = useState('')
   const cargandoRef = useRef(false)
   const inputFotoRef = useRef(null)
   const imagenFotoRef = useRef(null)
@@ -258,6 +260,8 @@ export default function Perfil() {
     }
 
     setPerfil(resultado.datos)
+    setPopExito('Foto de perfil actualizada')
+    window.setTimeout(() => setPopExito(''), 1900)
     cerrarModalFoto()
   }
 
@@ -424,6 +428,8 @@ export default function Perfil() {
           </section>
         </div>
       )}
+
+      <SuccessPop visible={Boolean(popExito)} mensaje={popExito} />
 
       <MessagesWidget />
     </main>
