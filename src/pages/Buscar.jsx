@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
 import { busquedaService } from '../services/busquedaService'
+import { perfilService } from '../services/perfilService'
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:5079/api').replace(/\/api\/?$/, '')
 
@@ -20,6 +22,8 @@ const mapearPerfil = (perfil) => ({
   avatar: inicialesDe(perfil.nombrePerfil || perfil.nombreUsuario),
   foto: normalizarMediaUrl(perfil.fotoPerfilUrl),
   bio: perfil.sobreMi || 'Sin descripción todavía.',
+  siguiendo: Boolean(perfil.siguiendo),
+  seguidores: perfil.seguidores ?? 0,
 })
 
 const mapearMomento = (momento) => ({
@@ -31,6 +35,7 @@ const mapearMomento = (momento) => ({
 })
 
 export default function Buscar() {
+  const navigate = useNavigate()
   const [filtro, setFiltro] = useState('todo')
   const [busqueda, setBusqueda] = useState('')
   const [cargando, setCargando] = useState(true)
@@ -38,6 +43,7 @@ export default function Buscar() {
   const [momentos, setMomentos] = useState([])
   const perfilesRowRef = useRef(null)
   const dragRef = useRef(null)
+  const bloquearClickRef = useRef(false)
   const busquedaActiva = busqueda.trim().length > 0
 
   useEffect(() => {
@@ -91,6 +97,7 @@ export default function Buscar() {
       pointerId: e.pointerId,
       inicioX: e.clientX,
       scrollInicial: nodo.scrollLeft,
+      movido: false,
     }
   }
 
@@ -99,11 +106,42 @@ export default function Buscar() {
     const drag = dragRef.current
     if (!nodo || !drag || drag.pointerId !== e.pointerId) return
 
-    nodo.scrollLeft = drag.scrollInicial - (e.clientX - drag.inicioX)
+    const distancia = e.clientX - drag.inicioX
+    if (Math.abs(distancia) > 6) {
+      drag.movido = true
+      bloquearClickRef.current = true
+    }
+
+    nodo.scrollLeft = drag.scrollInicial - distancia
   }
 
   const terminarArrastre = (e) => {
-    if (dragRef.current?.pointerId === e.pointerId) dragRef.current = null
+    if (dragRef.current?.pointerId === e.pointerId) {
+      const huboArrastre = dragRef.current.movido
+      dragRef.current = null
+      window.setTimeout(() => {
+        if (huboArrastre) bloquearClickRef.current = false
+      }, 80)
+    }
+  }
+
+  const irAPerfil = (perfil) => {
+    if (bloquearClickRef.current) return
+    navigate(`/perfil/${perfil.usuario.replace('@', '')}`)
+  }
+
+  const actualizarSeguimientoLocal = (datos) => {
+    setPerfiles((actuales) => actuales.map((perfil) => (
+      perfil.id === datos.idUsuario
+        ? { ...perfil, siguiendo: datos.siguiendo, seguidores: datos.seguidores }
+        : perfil
+    )))
+  }
+
+  const alternarSeguimiento = async (e, perfil) => {
+    e.stopPropagation()
+    const resultado = await perfilService.alternarSeguimiento(perfil.id)
+    if (resultado.exito && resultado.datos) actualizarSeguimientoLocal(resultado.datos)
   }
 
   return (
@@ -149,13 +187,18 @@ export default function Buscar() {
                   </div>
                 </article>
               )) : perfiles.map((perfil) => (
-                <article className="search-user-row" key={perfil.id}>
+                <article className="search-user-row" key={perfil.id} onClick={() => irAPerfil(perfil)}>
                   <div className="profile-avatar">{perfil.foto ? <img src={perfil.foto} alt={perfil.nombre} /> : perfil.avatar}</div>
                   <div>
                     <strong>{perfil.nombre}</strong>
                     <span>{perfil.usuario}</span>
                   </div>
-                  <button>Ver</button>
+                  <button
+                    className={perfil.siguiendo ? 'siguiendo' : ''}
+                    onClick={(e) => alternarSeguimiento(e, perfil)}
+                  >
+                    {perfil.siguiendo ? 'Siguiendo' : 'Seguir'}
+                  </button>
                 </article>
               ))}
             </div>
@@ -189,13 +232,18 @@ export default function Buscar() {
                   </div>
                 </article>
               )) : perfilesVisibles.map((perfil) => (
-                <article className="search-profile-card" key={perfil.id}>
+                <article className="search-profile-card" key={perfil.id} onClick={() => irAPerfil(perfil)}>
                   <div className="profile-avatar">{perfil.foto ? <img src={perfil.foto} alt={perfil.nombre} /> : perfil.avatar}</div>
                   <div>
                     <strong>{perfil.nombre}</strong>
                     <span>{perfil.usuario}</span>
                   </div>
-                  <button>Ver</button>
+                  <button
+                    className={perfil.siguiendo ? 'siguiendo' : ''}
+                    onClick={(e) => alternarSeguimiento(e, perfil)}
+                  >
+                    {perfil.siguiendo ? 'Siguiendo' : 'Seguir'}
+                  </button>
                 </article>
               ))}
             </div>

@@ -187,17 +187,6 @@ export default function Inicio() {
           <button className="compose-btn" onClick={() => setCrearAbierto(true)}>Compartir</button>
         </div>
 
-        {feed.length > 0 && (
-          <div className="stories" aria-label="Historias">
-            {feed.slice(0, 8).map((post) => (
-              <button className="story" key={post.id} onClick={() => setEstadoAbierto(post)}>
-                <span>{post.avatar}</span>
-                <small>{post.autor.split(' ')[0]}</small>
-              </button>
-            ))}
-          </div>
-        )}
-
         <div className="post-list">
           {cargandoFeed && (
             <article className="post-card feed-loading-card">

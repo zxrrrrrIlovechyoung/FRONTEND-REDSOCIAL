@@ -31,6 +31,8 @@ export const authService = {
   registrar: (datos) => llamar(() => httpClient.post('/auth/registro', datos)),
   perfil: () => llamar(() => httpClient.get('/auth/perfil')),
   miPerfil: () => llamar(() => httpClient.get('/perfil/me')),
+  perfilPublico: (nombreUsuario) => llamar(() => httpClient.get(`/perfil/${encodeURIComponent(nombreUsuario)}`)),
+  alternarSeguimiento: (idUsuario) => llamar(() => httpClient.post(`/perfil/${idUsuario}/seguimiento`)),
   actualizarSobreMi: (sobreMi) => llamar(() => httpClient.put('/perfil/sobre-mi', { sobreMi })),
   actualizarNombrePerfil: (nombrePerfil) => llamar(() => httpClient.put('/perfil/nombre-perfil', { nombrePerfil })),
   actualizarNombreUsuario: (nombreUsuario) => llamar(() => httpClient.put('/perfil/nombre-usuario', { nombreUsuario })),

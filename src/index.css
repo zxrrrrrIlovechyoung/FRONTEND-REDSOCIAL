@@ -1485,14 +1485,15 @@ pre {
 .post-image {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   background: #f1f5f9;
 }
 
 .post-text-only {
   display: grid;
   place-items: center;
+  aspect-ratio: 4 / 5;
   padding: 28px;
   background:
     radial-gradient(circle at top left, rgba(248, 113, 113, .13), transparent 34%),
@@ -1827,6 +1828,7 @@ pre {
 
 .profile-main {
   min-width: 0;
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 20px;
@@ -1958,6 +1960,13 @@ pre {
   color: #334155;
   font-size: 14px;
   line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.public-profile-page .profile-about {
+  max-width: min(100%, 680px);
+  margin-top: 18px;
 }
 
 .profile-actions {
@@ -2012,16 +2021,36 @@ pre {
 }
 
 .profile-moments {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
   gap: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0 10px;
+  scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+}
+
+.profile-moments::-webkit-scrollbar {
+  height: 7px;
+}
+
+.profile-moments::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.profile-moments::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #dbe3ee;
 }
 
 .moment-card {
+  flex: 0 0 min(100%, 860px);
   overflow: hidden;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fff;
+  scroll-snap-align: start;
 }
 
 .moment-card img,
@@ -2029,7 +2058,7 @@ pre {
 .moment-text-preview {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 10;
   object-fit: cover;
   background: #f1f5f9;
 }
@@ -2100,7 +2129,7 @@ pre {
 .moment-card-skeleton .skeleton-moment {
   min-height: 0;
   border-radius: 0;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
 }
 
 .moment-card-skeleton .skeleton.line {
@@ -2830,6 +2859,14 @@ pre {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fff;
+  cursor: pointer;
+  transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.search-user-row:hover {
+  border-color: #dbe0e8;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .06);
+  transform: translateY(-1px);
 }
 
 .search-user-row strong,
@@ -2860,6 +2897,14 @@ pre {
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
+}
+
+.search-user-row button.siguiendo,
+.search-profile-card button.siguiendo,
+.profile-btn.primary.following {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #111827;
 }
 
 .search-carousel {
@@ -2898,6 +2943,14 @@ pre {
   border-radius: 8px;
   background: #fff;
   scroll-snap-align: start;
+  cursor: pointer;
+  transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.search-profile-card:hover {
+  border-color: #dbe0e8;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .06);
+  transform: translateY(-1px);
 }
 
 .carousel-btn {
@@ -2960,6 +3013,72 @@ pre {
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
+}
+
+.public-profile-page {
+  padding-top: 28px;
+}
+
+.public-profile-stats-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 15px;
+}
+
+.public-profile-stats-row .profile-stats {
+  margin-top: 0;
+}
+
+.public-profile-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-left: auto;
+}
+
+.public-follow-btn {
+  flex: 0 0 auto;
+  min-width: 112px;
+  min-height: 38px;
+}
+
+.public-message-btn {
+  flex: 0 0 auto;
+  min-width: 92px;
+  min-height: 38px;
+}
+
+.profile-back-link {
+  width: fit-content;
+  margin: 0 0 14px;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.profile-back-link:hover {
+  color: #111827;
+}
+
+.public-profile-skeleton {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  min-height: 190px;
+}
+
+.skeleton.avatar.large {
+  width: 104px;
+  height: 104px;
 }
 
 .search-grid {
@@ -4004,12 +4123,28 @@ pre {
     width: 100%;
   }
 
+  .public-profile-stats-row {
+    width: 100%;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .public-profile-actions {
+    width: 100%;
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+
   .profile-btn {
     flex: 1;
   }
 
   .profile-moments {
-    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .moment-card {
+    flex-basis: 100%;
   }
 
   .feed-header h1 {

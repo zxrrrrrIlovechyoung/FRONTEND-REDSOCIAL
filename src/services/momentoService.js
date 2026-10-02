@@ -21,6 +21,9 @@ export const momentoService = {
   misMomentos: ({ cursor, cantidad = 30 } = {}) => llamar(() => httpClient.get('/momentos/me', {
     params: { cursor, cantidad },
   })),
+  momentosDeUsuario: (idUsuario, { cursor, cantidad = 30 } = {}) => llamar(() => httpClient.get(`/momentos/usuario/${idUsuario}`, {
+    params: { cursor, cantidad },
+  })),
   alternarMeGusta: (idMomento) => llamar(() => httpClient.post(`/momentos/${idMomento}/me-encanta`)),
   eliminar: (idMomento) => llamar(() => httpClient.delete(`/momentos/${idMomento}`)),
   crear: ({ texto, tipoAdjunto, archivo, linkUrl }) => {
