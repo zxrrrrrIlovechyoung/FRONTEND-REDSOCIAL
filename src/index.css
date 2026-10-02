@@ -2816,20 +2816,119 @@ pre {
   margin-top: 20px;
 }
 
-.search-profiles {
+.search-users-list {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
-.search-profile-card {
+.search-user-row {
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr);
-  gap: 11px;
-  padding: 14px;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 13px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fff;
+}
+
+.search-user-row strong,
+.search-user-row span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-user-row strong {
+  color: #111827;
+  font-size: 14px;
+}
+
+.search-user-row span {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 12.5px;
+}
+
+.search-user-row button {
+  padding: 8px 11px;
+  border: 0;
+  border-radius: 7px;
+  background: #111827;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.search-carousel {
+  position: relative;
+}
+
+.search-profiles-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-x;
+}
+
+.search-profiles-row:active {
+  cursor: grabbing;
+}
+
+.search-profiles-row::-webkit-scrollbar {
+  height: 0;
+}
+
+.search-profile-card {
+  flex: 0 0 300px;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  min-height: 74px;
+  padding: 12px 13px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  scroll-snap-align: start;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .94);
+  color: #111827;
+  font-size: 24px;
+  line-height: 1;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, .12);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.carousel-btn.prev {
+  left: -12px;
+}
+
+.carousel-btn.next {
+  right: -12px;
+}
+
+.carousel-btn:hover {
+  background: #f8fafc;
 }
 
 .search-profile-card strong,
@@ -2851,14 +2950,8 @@ pre {
   font-size: 12px;
 }
 
-.search-profile-card p {
-  margin: 9px 0 12px;
-  color: #334155;
-  font-size: 12.5px;
-  line-height: 1.45;
-}
-
 .search-profile-card button {
+  justify-self: end;
   padding: 8px 11px;
   border: 0;
   border-radius: 7px;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
 import { busquedaService } from '../services/busquedaService'
@@ -36,6 +36,9 @@ export default function Buscar() {
   const [cargando, setCargando] = useState(true)
   const [perfiles, setPerfiles] = useState([])
   const [momentos, setMomentos] = useState([])
+  const perfilesRowRef = useRef(null)
+  const dragRef = useRef(null)
+  const busquedaActiva = busqueda.trim().length > 0
 
   useEffect(() => {
     let activo = true
@@ -60,7 +63,7 @@ export default function Buscar() {
   }, [busqueda])
 
   const perfilesVisibles = useMemo(() => (
-    ['todo', 'usuarios', 'perfiles'].includes(filtro) ? perfiles : []
+    ['todo', 'usuarios', 'perfiles'].includes(filtro) ? perfiles.slice(0, 5) : []
   ), [filtro, perfiles])
 
   const momentosVisibles = useMemo(() => (
@@ -72,6 +75,36 @@ export default function Buscar() {
       })
       : []
   ), [filtro, momentos])
+
+  const moverCarrusel = (direccion) => {
+    const nodo = perfilesRowRef.current
+    if (!nodo) return
+    nodo.scrollBy({ left: direccion * 240, behavior: 'smooth' })
+  }
+
+  const iniciarArrastre = (e) => {
+    const nodo = perfilesRowRef.current
+    if (!nodo) return
+
+    nodo.setPointerCapture(e.pointerId)
+    dragRef.current = {
+      pointerId: e.pointerId,
+      inicioX: e.clientX,
+      scrollInicial: nodo.scrollLeft,
+    }
+  }
+
+  const arrastrar = (e) => {
+    const nodo = perfilesRowRef.current
+    const drag = dragRef.current
+    if (!nodo || !drag || drag.pointerId !== e.pointerId) return
+
+    nodo.scrollLeft = drag.scrollInicial - (e.clientX - drag.inicioX)
+  }
+
+  const terminarArrastre = (e) => {
+    if (dragRef.current?.pointerId === e.pointerId) dragRef.current = null
+  }
 
   return (
     <main className="app-shell">
@@ -99,39 +132,82 @@ export default function Buscar() {
           ))}
         </div>
 
-        <section className="search-section">
+        {busquedaActiva && (
+          <section className="search-section">
+            <div className="profile-section-title">
+              <h2>Usuarios</h2>
+              <span>{cargando ? 'Buscando...' : `${perfiles.length} resultados`}</span>
+            </div>
+
+            <div className="search-users-list">
+              {cargando ? [1, 2, 3, 4].map((item) => (
+                <article className="search-user-row skeleton-card" key={item}>
+                  <div className="skeleton avatar" />
+                  <div>
+                    <span className="skeleton line wide" />
+                    <span className="skeleton line small" />
+                  </div>
+                </article>
+              )) : perfiles.map((perfil) => (
+                <article className="search-user-row" key={perfil.id}>
+                  <div className="profile-avatar">{perfil.foto ? <img src={perfil.foto} alt={perfil.nombre} /> : perfil.avatar}</div>
+                  <div>
+                    <strong>{perfil.nombre}</strong>
+                    <span>{perfil.usuario}</span>
+                  </div>
+                  <button>Ver</button>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {!busquedaActiva && (
+          <section className="search-section">
           <div className="profile-section-title">
             <h2>Perfiles sugeridos</h2>
             <span>{cargando ? 'Buscando...' : `${perfilesVisibles.length} resultados`}</span>
           </div>
 
-          <div className="search-profiles">
-            {cargando ? [1, 2, 3].map((item) => (
-              <article className="search-profile-card skeleton-card" key={item}>
-                <div className="skeleton avatar" />
-                <div>
-                  <span className="skeleton line wide" />
-                  <span className="skeleton line small" />
-                  <span className="skeleton line" />
-                </div>
-              </article>
-            )) : perfilesVisibles.map((perfil) => (
-              <article className="search-profile-card" key={perfil.id}>
-                <div className="profile-avatar">{perfil.foto ? <img src={perfil.foto} alt={perfil.nombre} /> : perfil.avatar}</div>
-                <div>
-                  <strong>{perfil.nombre}</strong>
-                  <span>{perfil.usuario}</span>
-                  <p>{perfil.bio}</p>
-                </div>
-                <button>Ver</button>
-              </article>
-            ))}
+          <div className="search-carousel">
+            <button className="carousel-btn prev" onClick={() => moverCarrusel(-1)} aria-label="Ver perfiles anteriores">‹</button>
+            <div
+              className="search-profiles-row"
+              ref={perfilesRowRef}
+              onPointerDown={iniciarArrastre}
+              onPointerMove={arrastrar}
+              onPointerUp={terminarArrastre}
+              onPointerCancel={terminarArrastre}
+            >
+              {cargando ? [1, 2, 3, 4, 5].map((item) => (
+                <article className="search-profile-card skeleton-card" key={item}>
+                  <div className="skeleton avatar" />
+                  <div>
+                    <span className="skeleton line wide" />
+                    <span className="skeleton line small" />
+                    <span className="skeleton line" />
+                  </div>
+                </article>
+              )) : perfilesVisibles.map((perfil) => (
+                <article className="search-profile-card" key={perfil.id}>
+                  <div className="profile-avatar">{perfil.foto ? <img src={perfil.foto} alt={perfil.nombre} /> : perfil.avatar}</div>
+                  <div>
+                    <strong>{perfil.nombre}</strong>
+                    <span>{perfil.usuario}</span>
+                  </div>
+                  <button>Ver</button>
+                </article>
+              ))}
+            </div>
+            <button className="carousel-btn next" onClick={() => moverCarrusel(1)} aria-label="Ver más perfiles">›</button>
           </div>
-        </section>
+          </section>
+        )}
 
-        <section className="search-section">
+        {!busquedaActiva && (
+          <section className="search-section">
           <div className="profile-section-title">
-            <h2>Momentos encontrados</h2>
+            <h2>Momentos del momento</h2>
             <span>{cargando ? 'Cargando momentos' : `${momentosVisibles.length} publicaciones`}</span>
           </div>
 
@@ -151,7 +227,8 @@ export default function Buscar() {
               </article>
             ))}
           </div>
-        </section>
+          </section>
+        )}
       </section>
 
       <MessagesWidget />
