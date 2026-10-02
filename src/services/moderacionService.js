@@ -12,6 +12,8 @@ const llamar = async (peticion) => {
 }
 
 export const moderacionService = {
-  dashboard: () => llamar(() => httpClient.get('/moderacion/dashboard')),
+  dashboard: ({ paginaCuentas = 1, paginaReportes = 1, paginaObservacion = 1 } = {}) => llamar(() => httpClient.get('/moderacion/dashboard', {
+    params: { paginaCuentas, paginaReportes, paginaObservacion },
+  })),
   accionUsuario: (idUsuario, datos) => llamar(() => httpClient.post(`/moderacion/usuarios/${idUsuario}/accion`, datos)),
 }

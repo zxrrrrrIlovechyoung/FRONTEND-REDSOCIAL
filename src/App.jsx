@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import WarningNotice from './components/WarningNotice'
 import RutaProtegida from './routes/RutaProtegida'
 import RutaPorRol from './routes/RutaPorRol'
 import Login from './pages/Login'
@@ -46,6 +47,7 @@ export default function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <WarningNotice />
       </BrowserRouter>
     </AuthProvider>
   )

@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import SuccessPop from '../components/SuccessPop'
 import { useAuth } from '../context/AuthContext'
 import { moderacionService } from '../services/moderacionService'
 
@@ -37,9 +39,10 @@ const plantillasAdvertencia = [
 
 const datosIniciales = {
   estadisticas: { reportesAbiertos: 0, alertasSpam: 0, cuentasRestringidas: 0, casosUrgentes: 0 },
-  cuentasReportadas: [],
+  cuentasReportadas: { items: [], pagina: 1, total: 0, totalPaginas: 0, cantidad: 10 },
+  cuentasObservacion: { items: [], pagina: 1, total: 0, totalPaginas: 0, cantidad: 10 },
   alertasSpam: [],
-  reportesRecientes: [],
+  reportesRecientes: { items: [], pagina: 1, total: 0, totalPaginas: 0, cantidad: 10 },
 }
 
 const etiquetasMotivo = {
@@ -65,25 +68,44 @@ const formatearFechaReporte = (fecha) => {
 }
 
 export default function Moderador() {
-  const { usuario } = useAuth()
+  const navigate = useNavigate()
+  const { usuario, perfilActual, logout } = useAuth()
   const [dashboard, setDashboard] = useState(datosIniciales)
   const [cargando, setCargando] = useState(true)
   const [seccionActiva, setSeccionActiva] = useState('dashboard')
   const [vistaReportes, setVistaReportes] = useState('cuentas')
+  const [paginas, setPaginas] = useState({ cuentas: 1, reportes: 1, observacion: 1 })
   const [accionPendiente, setAccionPendiente] = useState(null)
+  const [confirmarSalida, setConfirmarSalida] = useState(false)
+  const [procesandoAccion, setProcesandoAccion] = useState(false)
   const [plantilla, setPlantilla] = useState(plantillasAdvertencia[0])
+  const [popExito, setPopExito] = useState('')
+
+  const cargarDashboard = async (paginasActuales = paginas) => {
+    const resultado = await moderacionService.dashboard({
+      paginaCuentas: paginasActuales.cuentas,
+      paginaReportes: paginasActuales.reportes,
+      paginaObservacion: paginasActuales.observacion,
+    })
+    if (resultado.exito && resultado.datos) setDashboard(resultado.datos)
+    setCargando(false)
+  }
 
   useEffect(() => {
     let activo = true
 
-    moderacionService.dashboard().then((resultado) => {
+    moderacionService.dashboard({
+      paginaCuentas: paginas.cuentas,
+      paginaReportes: paginas.reportes,
+      paginaObservacion: paginas.observacion,
+    }).then((resultado) => {
       if (!activo) return
       if (resultado.exito && resultado.datos) setDashboard(resultado.datos)
       setCargando(false)
     })
 
     return () => { activo = false }
-  }, [])
+  }, [paginas])
 
   const abrirAccion = (tipo, cuenta) => {
     setPlantilla(plantillasAdvertencia[0])
@@ -91,17 +113,41 @@ export default function Moderador() {
   }
 
   const ejecutarAccion = async () => {
-    if (!accionPendiente) return
+    if (!accionPendiente || procesandoAccion) return
 
     const esAdvertencia = accionPendiente.tipo === 'advertencia'
+    setProcesandoAccion(true)
     const respuesta = await moderacionService.accionUsuario(accionPendiente.cuenta.idUsuario, {
       tipo: accionPendiente.tipo,
       motivo: esAdvertencia ? plantilla.titulo : `Acción de moderación: ${accionPendiente.tipo}`,
       plantilla: esAdvertencia ? plantilla.id : null,
       mensaje: esAdvertencia ? plantilla.mensaje : null,
     })
+    setProcesandoAccion(false)
 
-    if (respuesta.exito) setAccionPendiente(null)
+    if (respuesta.exito) {
+      setAccionPendiente(null)
+      setPopExito(esAdvertencia ? 'Advertencia enviada' : 'Acción registrada')
+      if (esAdvertencia) {
+        setVistaReportes('observacion')
+        const siguientesPaginas = { ...paginas, observacion: 1 }
+        setPaginas(siguientesPaginas)
+        cargarDashboard(siguientesPaginas)
+      }
+      window.setTimeout(() => setPopExito(''), 1900)
+    }
+  }
+
+  const cambiarPagina = (tipo, direccion) => {
+    const datos = tipo === 'cuentas'
+      ? dashboard.cuentasReportadas
+      : tipo === 'reportes'
+        ? dashboard.reportesRecientes
+        : dashboard.cuentasObservacion
+
+    const siguiente = Math.min(Math.max((datos.pagina || 1) + direccion, 1), Math.max(datos.totalPaginas || 1, 1))
+    if (siguiente === datos.pagina) return
+    setPaginas((actuales) => ({ ...actuales, [tipo]: siguiente }))
   }
 
   const metricas = [
@@ -113,16 +159,16 @@ export default function Moderador() {
 
   const maxMetrica = Math.max(1, ...metricas.map((metrica) => metrica.valor || 0))
   const motivos = Object.entries(
-    dashboard.reportesRecientes.reduce((grupo, reporte) => {
+    dashboard.reportesRecientes.items.reduce((grupo, reporte) => {
       grupo[reporte.motivo] = (grupo[reporte.motivo] || 0) + 1
       return grupo
     }, {}),
   ).map(([motivo, total]) => ({ motivo, total }))
   const maxMotivo = Math.max(1, ...motivos.map((item) => item.total))
-  const reportesDeMomentos = dashboard.reportesRecientes.filter((reporte) => reporte.tipo === 'momento').length
-  const reportesDePerfiles = dashboard.reportesRecientes.filter((reporte) => reporte.tipo === 'perfil').length
+  const reportesDeMomentos = dashboard.reportesRecientes.items.filter((reporte) => reporte.tipo === 'momento').length
+  const reportesDePerfiles = dashboard.reportesRecientes.items.filter((reporte) => reporte.tipo === 'perfil').length
   const cuentasDistintasReportadas = new Set(
-    dashboard.reportesRecientes
+    dashboard.reportesRecientes.items
       .map((reporte) => reporte.cuentaReportada?.idUsuario)
       .filter(Boolean),
   ).size
@@ -133,6 +179,15 @@ export default function Moderador() {
     { titulo: 'Reportes de perfiles', valor: reportesDePerfiles, detalle: 'Cuentas señaladas directamente' },
     { titulo: 'Motivo principal', valor: motivoPrincipal ? (etiquetasMotivo[motivoPrincipal.motivo] ?? motivoPrincipal.motivo) : 'Sin datos', detalle: motivoPrincipal ? `${motivoPrincipal.total} reportes recientes` : 'Sin reportes abiertos' },
   ]
+  const nombrePerfil = perfilActual?.nombrePerfil || usuario?.nombrePerfil || usuario?.nombreUsuario || 'Moderador'
+  const nombreUsuario = perfilActual?.nombreUsuario || usuario?.nombreUsuario || usuario?.usuario || nombrePerfil
+  const fotoPerfilUrl = normalizarMediaUrl(perfilActual?.fotoPerfilUrl)
+  const iniciales = nombrePerfil.replace('@', '').slice(0, 2).toUpperCase()
+
+  const cerrarSesion = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <main className="moderator-shell">
@@ -158,8 +213,21 @@ export default function Moderador() {
         </div>
 
         <div className="moderator-role-card">
-          <strong>{usuario?.nombreUsuario ?? 'moderador'}</strong>
-          <span>{usuario?.rolActivo ?? 'moderador'}</span>
+          <div className="moderator-profile-row">
+            <div className="moderator-profile-avatar">
+              {fotoPerfilUrl ? <img src={fotoPerfilUrl} alt="Foto de perfil" /> : iniciales}
+            </div>
+            <div>
+              <strong>{nombrePerfil}</strong>
+              <span>@{String(nombreUsuario).replace('@', '').toLowerCase()}</span>
+              <small>{usuario?.rolActivo ?? 'moderador'}</small>
+            </div>
+          </div>
+
+          <div className="moderator-role-actions">
+            <button onClick={() => navigate('/seleccionar-entrada')}>Cambiar rol</button>
+            <button onClick={() => setConfirmarSalida(true)}>Cerrar sesión</button>
+          </div>
         </div>
       </aside>
 
@@ -237,17 +305,20 @@ export default function Moderador() {
               <button className={vistaReportes === 'pendientes' ? 'activo' : ''} onClick={() => setVistaReportes('pendientes')}>
                 Reportes por revisar
               </button>
+              <button className={vistaReportes === 'observacion' ? 'activo' : ''} onClick={() => setVistaReportes('observacion')}>
+                Cuentas a observación
+              </button>
             </div>
 
             {vistaReportes === 'cuentas' && (
               <section className="moderator-panel">
                 <div className="profile-section-title">
                   <h2>Cuentas más reportadas</h2>
-                  <span>{dashboard.cuentasReportadas.length} cuentas</span>
+                  <span>{dashboard.cuentasReportadas.total} cuentas</span>
                 </div>
 
                 <div className="reported-list">
-                  {dashboard.cuentasReportadas.length === 0 && (
+                  {dashboard.cuentasReportadas.items.length === 0 && (
                     <article className="reported-card">
                       <div>
                         <strong>Sin cuentas reportadas</strong>
@@ -257,7 +328,7 @@ export default function Moderador() {
                     </article>
                   )}
 
-                  {dashboard.cuentasReportadas.map((cuenta) => (
+                  {dashboard.cuentasReportadas.items.map((cuenta) => (
                     <article className="reported-card" key={cuenta.idUsuario}>
                       <div>
                         <strong>{cuenta.nombre}</strong>
@@ -274,6 +345,11 @@ export default function Moderador() {
                     </article>
                   ))}
                 </div>
+                <div className="moderation-pagination">
+                  <button onClick={() => cambiarPagina('cuentas', -1)} disabled={dashboard.cuentasReportadas.pagina <= 1}>Anterior</button>
+                  <span>Página {dashboard.cuentasReportadas.pagina} de {Math.max(dashboard.cuentasReportadas.totalPaginas, 1)}</span>
+                  <button onClick={() => cambiarPagina('cuentas', 1)} disabled={dashboard.cuentasReportadas.pagina >= dashboard.cuentasReportadas.totalPaginas}>Siguiente</button>
+                </div>
               </section>
             )}
 
@@ -281,21 +357,20 @@ export default function Moderador() {
               <section className="moderator-panel">
                 <div className="profile-section-title">
                   <h2>Reportes por revisar</h2>
-                  <span>{dashboard.reportesRecientes.length} abiertos</span>
+                  <span>{dashboard.reportesRecientes.total} abiertos</span>
                 </div>
 
                 <div className="report-detail-list compact">
-                  {dashboard.reportesRecientes.length === 0 && (
+                  {dashboard.reportesRecientes.items.length === 0 && (
                     <article className="report-detail-card empty">
-                      <strong>Sin reportes abiertos</strong>
-                      <span>Cuando alguien reporte un perfil o momento, aparecerá con la información de ambas cuentas.</span>
+                      <strong>Sin publicaciones reportadas</strong>
+                      <span>Cuando alguien reporte un momento, aparecerá aquí para revisión.</span>
                     </article>
                   )}
 
-                  {dashboard.reportesRecientes.map((reporte) => (
+                  {dashboard.reportesRecientes.items.map((reporte) => (
                     <article className="report-detail-card" key={reporte.id}>
                       <div className="report-detail-head">
-                        <span>{reporte.tipo === 'momento' ? 'Momento reportado' : 'Perfil reportado'}</span>
                         <time dateTime={reporte.fechaReporte}>{formatearFechaReporte(reporte.fechaReporte)}</time>
                       </div>
 
@@ -336,6 +411,52 @@ export default function Moderador() {
                       )}
                     </article>
                   ))}
+                </div>
+                <div className="moderation-pagination">
+                  <button onClick={() => cambiarPagina('reportes', -1)} disabled={dashboard.reportesRecientes.pagina <= 1}>Anterior</button>
+                  <span>Página {dashboard.reportesRecientes.pagina} de {Math.max(dashboard.reportesRecientes.totalPaginas, 1)}</span>
+                  <button onClick={() => cambiarPagina('reportes', 1)} disabled={dashboard.reportesRecientes.pagina >= dashboard.reportesRecientes.totalPaginas}>Siguiente</button>
+                </div>
+              </section>
+            )}
+
+            {vistaReportes === 'observacion' && (
+              <section className="moderator-panel">
+                <div className="profile-section-title">
+                  <h2>Cuentas a observación</h2>
+                  <span>{dashboard.cuentasObservacion.total} cuentas</span>
+                </div>
+
+                <div className="reported-list">
+                  {dashboard.cuentasObservacion.items.length === 0 && (
+                    <article className="reported-card">
+                      <div>
+                        <strong>Sin cuentas a observación</strong>
+                        <span>Cuando envíes una advertencia, la cuenta aparecerá aquí.</span>
+                        <p>Este espacio ayuda a separar casos ya advertidos de reportes nuevos.</p>
+                      </div>
+                    </article>
+                  )}
+
+                  {dashboard.cuentasObservacion.items.map((cuenta) => (
+                    <article className="reported-card observation-card" key={cuenta.idUsuario}>
+                      <div>
+                        <strong>{cuenta.nombre}</strong>
+                        <span>{cuenta.usuario} · {cuenta.advertencias} advertencia{cuenta.advertencias === 1 ? '' : 's'}</span>
+                        <p>{cuenta.motivo}</p>
+                      </div>
+                      <div className="moderator-actions">
+                        <button onClick={() => abrirAccion('advertencia', cuenta)}>Nueva advertencia</button>
+                        <button onClick={() => abrirAccion('restringir', cuenta)}>Restringir</button>
+                        <button onClick={() => abrirAccion('desactivar', cuenta)}>Desactivar</button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+                <div className="moderation-pagination">
+                  <button onClick={() => cambiarPagina('observacion', -1)} disabled={dashboard.cuentasObservacion.pagina <= 1}>Anterior</button>
+                  <span>Página {dashboard.cuentasObservacion.pagina} de {Math.max(dashboard.cuentasObservacion.totalPaginas, 1)}</span>
+                  <button onClick={() => cambiarPagina('observacion', 1)} disabled={dashboard.cuentasObservacion.pagina >= dashboard.cuentasObservacion.totalPaginas}>Siguiente</button>
                 </div>
               </section>
             )}
@@ -403,14 +524,29 @@ export default function Moderador() {
             )}
 
             <div>
-              <button className="profile-btn" onClick={() => setAccionPendiente(null)}>Cancelar</button>
-              <button className={accionPendiente.tipo === 'eliminar' ? 'danger-btn' : accionPendiente.tipo === 'desactivar' ? 'warning-btn' : 'profile-btn primary'} onClick={ejecutarAccion}>
-                Confirmar
+              <button className="profile-btn" onClick={() => setAccionPendiente(null)} disabled={procesandoAccion}>Cancelar</button>
+              <button className={accionPendiente.tipo === 'eliminar' ? 'danger-btn' : accionPendiente.tipo === 'desactivar' ? 'warning-btn' : 'profile-btn primary'} onClick={ejecutarAccion} disabled={procesandoAccion}>
+                {procesandoAccion ? <span className="spinner" aria-hidden="true" /> : 'Confirmar'}
               </button>
             </div>
           </section>
         </div>
       )}
+
+      {confirmarSalida && (
+        <div className="modal-backdrop" role="presentation" onClick={() => setConfirmarSalida(false)}>
+          <section className="confirm-modal" role="dialog" aria-modal="true" aria-label="Cerrar sesión" onClick={(e) => e.stopPropagation()}>
+            <h2>Cerrar sesión</h2>
+            <p>¿Quieres salir de tu sesión de moderador?</p>
+            <div>
+              <button className="profile-btn" onClick={() => setConfirmarSalida(false)}>Cancelar</button>
+              <button className="profile-btn primary" onClick={cerrarSesion}>Cerrar sesión</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      <SuccessPop visible={Boolean(popExito)} mensaje={popExito} />
     </main>
   )
 }

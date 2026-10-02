@@ -26,6 +26,7 @@ export default function AppSidebar({ activo = 'Inicio' }) {
   const nombreUsuario = perfilActual?.nombreUsuario || usuario?.nombreUsuario || usuario?.usuario || nombre
   const fotoPerfilUrl = normalizarMediaUrl(perfilActual?.fotoPerfilUrl)
   const rol = usuario?.rolActivo ?? usuario?.rol ?? 'usuario'
+  const puedeCambiarRol = (usuario?.roles?.length ?? 0) > 1
   const herramientasVisibles = ['moderador', 'admin'].includes(rol)
     ? [...herramientas, { icono: '!', texto: 'Moderador', ruta: '/moderador' }]
     : herramientas
@@ -83,15 +84,23 @@ export default function AppSidebar({ activo = 'Inicio' }) {
         </nav>
       </div>
 
-      <Link className="profile-mini" to="/perfil">
-        <div className="profile-avatar">
-          {fotoPerfilUrl ? <img src={fotoPerfilUrl} alt="Foto de perfil" /> : nombre.slice(0, 2).toUpperCase()}
-        </div>
-        <div className="profile-copy">
-          <strong>{nombre}</strong>
-          <span>@{String(nombreUsuario).toLowerCase()}</span>
-        </div>
-      </Link>
+      <div className={`profile-mini-card${puedeCambiarRol ? ' con-rol' : ''}`}>
+        <Link className="profile-mini" to="/perfil">
+          <div className="profile-avatar">
+            {fotoPerfilUrl ? <img src={fotoPerfilUrl} alt="Foto de perfil" /> : nombre.slice(0, 2).toUpperCase()}
+          </div>
+          <div className="profile-copy">
+            <strong>{nombre}</strong>
+            <span>@{String(nombreUsuario).replace('@', '').toLowerCase()}</span>
+          </div>
+        </Link>
+
+        {puedeCambiarRol && (
+          <button className="profile-role-switch" onClick={() => navigate('/seleccionar-entrada')}>
+            Cambiar rol
+          </button>
+        )}
+      </div>
     </aside>
   )
 }
