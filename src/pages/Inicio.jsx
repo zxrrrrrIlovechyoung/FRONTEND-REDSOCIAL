@@ -331,7 +331,7 @@ export default function Inicio() {
         <div className="confirm-backdrop" role="presentation" onClick={() => setMomentoAEliminar(null)}>
           <section className="confirm-modal" role="dialog" aria-modal="true" aria-label="Eliminar momento" onClick={(e) => e.stopPropagation()}>
             <h2>Eliminar momento</h2>
-            <p>Este momento dejará de verse ahora, pero se conservará en auditoría durante 30 días antes de eliminarse definitivamente.</p>
+            <p>Este momento dejará de verse en tu perfil y en el feed.</p>
             <div>
               <button className="profile-btn" onClick={() => setMomentoAEliminar(null)} disabled={eliminandoMomento}>Cancelar</button>
               <button className="profile-btn danger" onClick={confirmarEliminarMomento} disabled={eliminandoMomento}>
