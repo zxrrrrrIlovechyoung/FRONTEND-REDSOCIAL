@@ -91,8 +91,8 @@ export default function Buscar() {
   const iniciarArrastre = (e) => {
     const nodo = perfilesRowRef.current
     if (!nodo) return
+    if (e.target.closest('button')) return
 
-    nodo.setPointerCapture(e.pointerId)
     dragRef.current = {
       pointerId: e.pointerId,
       inicioX: e.clientX,
@@ -120,7 +120,7 @@ export default function Buscar() {
       const huboArrastre = dragRef.current.movido
       dragRef.current = null
       window.setTimeout(() => {
-        if (huboArrastre) bloquearClickRef.current = false
+        bloquearClickRef.current = false
       }, 80)
     }
   }
@@ -140,6 +140,7 @@ export default function Buscar() {
 
   const alternarSeguimiento = async (e, perfil) => {
     e.stopPropagation()
+    e.preventDefault()
     const resultado = await perfilService.alternarSeguimiento(perfil.id)
     if (resultado.exito && resultado.datos) actualizarSeguimientoLocal(resultado.datos)
   }
@@ -195,6 +196,7 @@ export default function Buscar() {
                   </div>
                   <button
                     className={perfil.siguiendo ? 'siguiendo' : ''}
+                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => alternarSeguimiento(e, perfil)}
                   >
                     {perfil.siguiendo ? 'Siguiendo' : 'Seguir'}
@@ -240,6 +242,7 @@ export default function Buscar() {
                   </div>
                   <button
                     className={perfil.siguiendo ? 'siguiendo' : ''}
+                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => alternarSeguimiento(e, perfil)}
                   >
                     {perfil.siguiendo ? 'Siguiendo' : 'Seguir'}

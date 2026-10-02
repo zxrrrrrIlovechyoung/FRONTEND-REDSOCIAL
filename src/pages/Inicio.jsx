@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
+import SuccessPop from '../components/SuccessPop'
+import { useAuth } from '../context/AuthContext'
 import { momentoService } from '../services/momentoService'
+import { reporteService } from '../services/reporteService'
 import { formatearFechaMomento } from '../utils/fechas'
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:5079/api').replace(/\/api\/?$/, '')
@@ -14,8 +18,19 @@ const normalizarMediaUrl = (url) => {
 
 const inicialesDe = (texto) => (texto || 'MM').replace('@', '').slice(0, 2).toUpperCase()
 
+const motivosReporte = [
+  { id: 'spam', texto: 'Spam' },
+  { id: 'acoso', texto: 'Acoso' },
+  { id: 'odio', texto: 'Odio' },
+  { id: 'suplantacion', texto: 'Suplantación' },
+  { id: 'contenido_inapropiado', texto: 'Contenido inapropiado' },
+  { id: 'violencia', texto: 'Violencia' },
+  { id: 'otro', texto: 'Otro' },
+]
+
 const mapearMomento = (momento) => ({
   id: momento.idMomento,
+  idUsuario: momento.idUsuario,
   autor: momento.autor || 'Moment',
   usuario: momento.usuario || '@moment',
   avatar: momento.avatar || inicialesDe(momento.autor || momento.usuario),
@@ -31,6 +46,9 @@ const mapearMomento = (momento) => ({
 })
 
 export default function Inicio() {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const { usuario } = useAuth()
   const [corazonesAnimados, setCorazonesAnimados] = useState({})
   const [estadoAbierto, setEstadoAbierto] = useState(null)
   const [crearAbierto, setCrearAbierto] = useState(false)
@@ -45,7 +63,13 @@ export default function Inicio() {
   const [errorCrear, setErrorCrear] = useState('')
   const [menuPostAbierto, setMenuPostAbierto] = useState(null)
   const [momentoAEliminar, setMomentoAEliminar] = useState(null)
+  const [momentoAReportar, setMomentoAReportar] = useState(null)
+  const [motivoReporte, setMotivoReporte] = useState('spam')
+  const [detalleReporte, setDetalleReporte] = useState('')
   const [eliminandoMomento, setEliminandoMomento] = useState(false)
+  const [enviandoReporte, setEnviandoReporte] = useState(false)
+  const [errorReporte, setErrorReporte] = useState('')
+  const [popExito, setPopExito] = useState('')
 
   const seleccionarArchivo = (e) => {
     const archivo = e.target.files?.[0]
@@ -69,6 +93,13 @@ export default function Inicio() {
     window.addEventListener('abrir-crear-momento', abrirCrear)
     return () => window.removeEventListener('abrir-crear-momento', abrirCrear)
   }, [])
+
+  useEffect(() => {
+    if (searchParams.get('crear') !== '1') return
+
+    setCrearAbierto(true)
+    navigate('/inicio', { replace: true })
+  }, [navigate, searchParams])
 
   useEffect(() => {
     let activo = true
@@ -122,6 +153,7 @@ export default function Inicio() {
   }
 
   const totalLikes = (likes) => Number(likes || 0).toLocaleString('en-US')
+  const esMomentoPropio = (post) => Number(post.idUsuario) === Number(usuario?.idUsuario)
 
   const confirmarEliminarMomento = async () => {
     if (!momentoAEliminar) return
@@ -136,6 +168,26 @@ export default function Inicio() {
     setEstadoAbierto((actual) => actual?.id === momentoAEliminar.id ? null : actual)
     setMomentoAEliminar(null)
     setMenuPostAbierto(null)
+  }
+
+  const confirmarReporteMomento = async () => {
+    if (!momentoAReportar || enviandoReporte) return
+
+    setEnviandoReporte(true)
+    setErrorReporte('')
+    const respuesta = await reporteService.momento({ idMomento: momentoAReportar.id, motivo: motivoReporte, detalle: detalleReporte })
+    setEnviandoReporte(false)
+
+    if (!respuesta.exito) {
+      setErrorReporte(respuesta.mensaje || 'Ups, algo salió mal. Inténtalo más tarde')
+      return
+    }
+
+    setMomentoAReportar(null)
+    setMotivoReporte('spam')
+    setDetalleReporte('')
+    setPopExito('Reporte enviado')
+    window.setTimeout(() => setPopExito(''), 1900)
   }
 
   const publicarMomento = async () => {
@@ -210,13 +262,17 @@ export default function Inicio() {
           {feed.map((post) => (
             <article className="post-card" key={post.id}>
               <header className="post-top">
-                <div className="author">
+                <button
+                  className="author author-link"
+                  onClick={() => navigate(`/perfil/${post.usuario.replace('@', '')}`)}
+                  aria-label={`Ver perfil de ${post.autor}`}
+                >
                   <div className="author-avatar">{post.avatar}</div>
                   <div>
                     <strong>{post.autor}</strong>
                     <span>{post.usuario} · {post.tiempo}</span>
                   </div>
-                </div>
+                </button>
                 <div className="post-more">
                   <button
                     className="more-btn"
@@ -227,12 +283,25 @@ export default function Inicio() {
                   </button>
                   {menuPostAbierto === post.id && (
                     <div className="post-more-menu">
-                      <button onClick={() => {
-                        setMomentoAEliminar(post)
-                        setMenuPostAbierto(null)
-                      }}>
-                        Eliminar momento
-                      </button>
+                      {esMomentoPropio(post) && (
+                        <button onClick={() => {
+                          setMomentoAEliminar(post)
+                          setMenuPostAbierto(null)
+                        }}>
+                          Eliminar momento
+                        </button>
+                      )}
+                      {!esMomentoPropio(post) && (
+                        <button onClick={() => {
+                          setMomentoAReportar(post)
+                          setErrorReporte('')
+                          setDetalleReporte('')
+                          setMotivoReporte('spam')
+                          setMenuPostAbierto(null)
+                        }}>
+                          Reportar momento
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -263,7 +332,11 @@ export default function Inicio() {
                   <button aria-label="Comentar">☰</button>
                   <button aria-label="Enviar">✉</button>
                 </div>
-                <button aria-label="Guardar">□</button>
+                <button className="share-action" aria-label="Compartir momento" title="Compartir momento">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M14 6v3.4h-2.8c-4.8 0-7.6 2.9-8.2 8.1 1.6-2.4 4.1-3.6 7.3-3.6H14V18l7-6-7-6Z" />
+                  </svg>
+                </button>
               </div>
 
               <div className="post-body">
@@ -325,6 +398,43 @@ export default function Inicio() {
               <button className="profile-btn" onClick={() => setMomentoAEliminar(null)} disabled={eliminandoMomento}>Cancelar</button>
               <button className="profile-btn danger" onClick={confirmarEliminarMomento} disabled={eliminandoMomento}>
                 {eliminandoMomento ? <span className="spinner" aria-hidden="true" /> : 'Eliminar'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {momentoAReportar && (
+        <div className="confirm-backdrop" role="presentation" onClick={() => setMomentoAReportar(null)}>
+          <section className="confirm-modal report-modal" role="dialog" aria-modal="true" aria-label="Reportar momento" onClick={(e) => e.stopPropagation()}>
+            <h2>Reportar momento</h2>
+            <p>Selecciona el motivo para que moderación pueda revisarlo.</p>
+            <div className="report-reasons" role="group" aria-label="Motivo del reporte">
+              {motivosReporte.map((motivo) => (
+                <button
+                  className={motivoReporte === motivo.id ? 'activo' : ''}
+                  key={motivo.id}
+                  onClick={() => setMotivoReporte(motivo.id)}
+                >
+                  {motivo.texto}
+                </button>
+              ))}
+            </div>
+            <div className="report-detail-field">
+              <textarea
+                value={detalleReporte}
+                onChange={(e) => setDetalleReporte(e.target.value.slice(0, 500))}
+                placeholder="Detalle opcional"
+                maxLength={500}
+                disabled={enviandoReporte}
+              />
+              <small>{detalleReporte.length}/500</small>
+            </div>
+            {errorReporte && <p className="report-error">{errorReporte}</p>}
+            <div>
+              <button className="profile-btn" onClick={() => setMomentoAReportar(null)} disabled={enviandoReporte}>Cancelar</button>
+              <button className="profile-btn primary" onClick={confirmarReporteMomento} disabled={enviandoReporte}>
+                {enviandoReporte ? <span className="spinner" aria-hidden="true" /> : 'Enviar reporte'}
               </button>
             </div>
           </section>
@@ -408,6 +518,8 @@ export default function Inicio() {
           </section>
         </div>
       )}
+
+      <SuccessPop visible={Boolean(popExito)} mensaje={popExito} />
 
       <MessagesWidget />
     </main>

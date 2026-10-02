@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
+import SuccessPop from '../components/SuccessPop'
 import { momentoService } from '../services/momentoService'
 import { perfilService } from '../services/perfilService'
+import { reporteService } from '../services/reporteService'
 import { formatearFechaMomento } from '../utils/fechas'
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:5079/api').replace(/\/api\/?$/, '')
@@ -15,6 +17,16 @@ const normalizarMediaUrl = (url) => {
 }
 
 const inicialesDe = (texto) => (texto || 'MM').replace('@', '').slice(0, 2).toUpperCase()
+
+const motivosReporte = [
+  { id: 'spam', texto: 'Spam' },
+  { id: 'acoso', texto: 'Acoso' },
+  { id: 'odio', texto: 'Odio' },
+  { id: 'suplantacion', texto: 'Suplantación' },
+  { id: 'contenido_inapropiado', texto: 'Contenido inapropiado' },
+  { id: 'violencia', texto: 'Violencia' },
+  { id: 'otro', texto: 'Otro' },
+]
 
 const mapearMomento = (momento) => ({
   id: momento.idMomento,
@@ -42,6 +54,11 @@ export default function PerfilPublico() {
   const [error, setError] = useState('')
   const [errorMomentos, setErrorMomentos] = useState('')
   const [procesando, setProcesando] = useState(false)
+  const [reporteAbierto, setReporteAbierto] = useState(null)
+  const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false)
+  const [motivoReporte, setMotivoReporte] = useState('spam')
+  const [detalleReporte, setDetalleReporte] = useState('')
+  const [popExito, setPopExito] = useState('')
   const cargandoRef = useRef(false)
   const sentinelRef = useRef(null)
 
@@ -148,6 +165,36 @@ export default function PerfilPublico() {
     })
   }
 
+  const enviarReporte = async () => {
+    if (!reporteAbierto) return
+    const resultado = reporteAbierto.tipo === 'perfil'
+      ? await reporteService.perfil({ idUsuario: perfil.idUsuario, motivo: motivoReporte, detalle: detalleReporte })
+      : await reporteService.momento({ idMomento: reporteAbierto.idMomento, motivo: motivoReporte, detalle: detalleReporte })
+
+    if (resultado.exito) {
+      setReporteAbierto(null)
+      setDetalleReporte('')
+      setMotivoReporte('spam')
+      setPopExito('Reporte enviado')
+      window.setTimeout(() => setPopExito(''), 1900)
+    }
+  }
+
+  const compartirPerfil = async () => {
+    const url = window.location.href
+    try {
+      await navigator.clipboard?.writeText(url)
+    } catch {
+      window.prompt('Copia el enlace del perfil', url)
+    }
+    setMenuPerfilAbierto(false)
+  }
+
+  const abrirReportePerfil = () => {
+    setMenuPerfilAbierto(false)
+    setReporteAbierto({ tipo: 'perfil' })
+  }
+
   const fotoPerfilUrl = normalizarMediaUrl(perfil?.fotoPerfilUrl)
   const usuario = perfil?.nombreUsuario ? `@${perfil.nombreUsuario}` : ''
   const iniciales = inicialesDe(perfil?.nombrePerfil || perfil?.nombreUsuario)
@@ -186,7 +233,19 @@ export default function PerfilPublico() {
                 </div>
 
                 <div className="profile-info">
-                  <p className="feed-kicker">Perfil</p>
+                  <div className="public-profile-kicker">
+                    <p className="feed-kicker">Perfil</p>
+                    <button
+                      className="profile-options-trigger"
+                      onClick={() => setMenuPerfilAbierto(true)}
+                      aria-label="Opciones del perfil"
+                      title="Opciones del perfil"
+                    >
+                      <span />
+                      <span />
+                      <span />
+                    </button>
+                  </div>
                   <div className="profile-title-row">
                     <div className="profile-name-line">
                       <h1>{perfil.nombrePerfil}</h1>
@@ -280,6 +339,7 @@ export default function PerfilPublico() {
                           {momento.leGusta ? '♥' : '♡'}
                         </button>
                         <strong>{momento.likes.toLocaleString('es-MX')} me encanta · {momento.tiempo}</strong>
+                        <button className="moment-report-btn" onClick={() => setReporteAbierto({ tipo: 'momento', idMomento: momento.id })}>Reportar</button>
                       </div>
                     </div>
                   </article>
@@ -303,6 +363,75 @@ export default function PerfilPublico() {
       </section>
 
       <MessagesWidget />
+
+      {menuPerfilAbierto && (
+        <div className="bottom-sheet-backdrop" role="presentation" onClick={() => setMenuPerfilAbierto(false)}>
+          <section className="profile-options-sheet" role="dialog" aria-modal="true" aria-label="Opciones del perfil" onClick={(e) => e.stopPropagation()}>
+            <span className="sheet-handle" aria-hidden="true" />
+            <h2>Opciones del perfil</h2>
+            <button onClick={compartirPerfil}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8.6 13.4 15.4 17" />
+                <path d="M15.4 7 8.6 10.6" />
+                <circle cx="6" cy="12" r="2.6" />
+                <circle cx="18" cy="5.6" r="2.6" />
+                <circle cx="18" cy="18.4" r="2.6" />
+              </svg>
+              <span>
+                <strong>Compartir perfil</strong>
+                <small>Copiar enlace del perfil público.</small>
+              </span>
+            </button>
+            <button className="danger-option" onClick={abrirReportePerfil}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 8v5" />
+                <path d="M12 17h.01" />
+                <path d="M10.2 3.6 2.7 17.1a2 2 0 0 0 1.8 2.9h15a2 2 0 0 0 1.8-2.9L13.8 3.6a2.1 2.1 0 0 0-3.6 0Z" />
+              </svg>
+              <span>
+                <strong>Reportar perfil</strong>
+                <small>Enviar este perfil a revisión de moderación.</small>
+              </span>
+            </button>
+            <button className="sheet-cancel" onClick={() => setMenuPerfilAbierto(false)}>Cancelar</button>
+          </section>
+        </div>
+      )}
+
+      {reporteAbierto && (
+        <div className="modal-backdrop" role="presentation" onClick={() => setReporteAbierto(null)}>
+          <section className="confirm-modal report-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <h2>{reporteAbierto.tipo === 'perfil' ? 'Reportar perfil' : 'Reportar momento'}</h2>
+            <p>Selecciona el motivo para que moderación pueda revisarlo.</p>
+            <div className="report-reasons" role="group" aria-label="Motivo del reporte">
+              {motivosReporte.map((motivo) => (
+                <button
+                  className={motivoReporte === motivo.id ? 'activo' : ''}
+                  key={motivo.id}
+                  onClick={() => setMotivoReporte(motivo.id)}
+                >
+                  {motivo.texto}
+                </button>
+              ))}
+            </div>
+            <div className="report-detail-field">
+              <textarea
+                value={detalleReporte}
+                onChange={(e) => setDetalleReporte(e.target.value.slice(0, 500))}
+                placeholder="Detalle opcional"
+                maxLength={500}
+              />
+              <small>{detalleReporte.length}/500</small>
+            </div>
+            <div>
+              <button className="profile-btn" onClick={() => setReporteAbierto(null)}>Cancelar</button>
+              <button className="profile-btn primary" onClick={enviarReporte}>Enviar reporte</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      <SuccessPop visible={Boolean(popExito)} mensaje={popExito} />
     </main>
   )
 }

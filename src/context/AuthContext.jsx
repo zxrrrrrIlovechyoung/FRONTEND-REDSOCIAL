@@ -59,6 +59,12 @@ export function AuthProvider({ children }) {
   const verificarRecuperacionPassword = useCallback((email, codigo) => authService.verificarRecuperacionPassword(email, codigo), [])
   const cambiarPassword = useCallback((email, recoveryToken, nuevaPassword) => authService.cambiarPassword(email, recoveryToken, nuevaPassword), [])
 
+  const seleccionarRolActivo = useCallback((rolActivo) => {
+    const actualizado = tokenStorage.actualizarUsuario({ rolActivo })
+    setUsuario(actualizado)
+    return actualizado
+  }, [])
+
   const logout = useCallback(() => {
     tokenStorage.limpiar()
     setUsuario(null)
@@ -66,7 +72,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ usuario, perfilActual, refrescarPerfil, estaAutenticado: !!usuario, login, registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, verificarEmailDisponible, verificarUsuarioDisponible, solicitarRecuperacionPassword, verificarRecuperacionPassword, cambiarPassword, logout }}>
+    <AuthContext.Provider value={{ usuario, perfilActual, refrescarPerfil, estaAutenticado: !!usuario, login, registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, verificarEmailDisponible, verificarUsuarioDisponible, solicitarRecuperacionPassword, verificarRecuperacionPassword, cambiarPassword, seleccionarRolActivo, logout }}>
       {children}
     </AuthContext.Provider>
   )

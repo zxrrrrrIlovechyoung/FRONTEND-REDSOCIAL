@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import CampoPassword from '../components/CampoPassword'
-import { rutaInicialPorRol } from '../utils/rutasPorRol'
+import { necesitaSelectorDeEntrada, rutaInicialPorRol } from '../utils/rutasPorRol'
 
 const RECORDAR_USUARIO_KEY = 'moment_recordar_usuario'
 const dominiosEmail = ['gmail.com', 'hotmail.com']
@@ -19,7 +19,10 @@ export default function Login() {
   const [cargando, setCargando] = useState(false)
   const [intentoFallido, setIntentoFallido] = useState(false)
 
-  if (estaAutenticado) return <Navigate to={rutaInicialPorRol(usuario?.rol)} replace />
+  if (estaAutenticado) {
+    if (necesitaSelectorDeEntrada(usuario)) return <Navigate to="/seleccionar-entrada" replace />
+    return <Navigate to={rutaInicialPorRol(usuario?.rolActivo ?? usuario?.rol)} replace />
+  }
 
   const onChange = (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
@@ -59,8 +62,8 @@ export default function Login() {
     if (resultado.exito) {
       if (form.recordarUsuario) sessionStorage.setItem(RECORDAR_USUARIO_KEY, form.usuarioOEmail.trim())
       else sessionStorage.removeItem(RECORDAR_USUARIO_KEY)
-      const rol = resultado.datos?.rol ?? 'usuario'
-      navigate(rutaInicialPorRol(rol))
+      if (necesitaSelectorDeEntrada(resultado.datos)) navigate('/seleccionar-entrada')
+      else navigate(rutaInicialPorRol(resultado.datos?.rolActivo ?? resultado.datos?.rol ?? 'usuario'))
     }
     else {
       setIntentoFallido(true)

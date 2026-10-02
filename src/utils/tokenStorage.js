@@ -29,13 +29,39 @@ const normalizarRol = ({ rol, role, nombreUsuario, email, token }) => {
   return 'usuario'
 }
 
+const normalizarRoles = ({ roles, rol, role, nombreUsuario, email, token }) => {
+  const payload = token ? leerPayloadJwt(token) : {}
+  const rolesDetectados = roles
+    ?? payload.roles
+    ?? payload.role
+    ?? payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
+
+  const lista = Array.isArray(rolesDetectados)
+    ? rolesDetectados
+    : String(rolesDetectados ?? '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+
+  const rolPrincipal = normalizarRol({ rol, role, nombreUsuario, email, token })
+  return Array.from(new Set([rolPrincipal, ...lista.map((item) => String(item).toLowerCase())]))
+}
+
 export const tokenStorage = {
   obtener: () => sessionStorage.getItem(TOKEN_KEY),
   obtenerUsuario: () => JSON.parse(sessionStorage.getItem(USUARIO_KEY) ?? 'null'),
   guardar: ({ token, ...usuario }) => {
-    const usuarioConRol = { ...usuario, rol: normalizarRol({ ...usuario, token }) }
+    const roles = normalizarRoles({ ...usuario, token })
+    const usuarioConRol = { ...usuario, rol: normalizarRol({ ...usuario, token }), rolActivo: usuario.rolActivo ?? null, roles }
     sessionStorage.setItem(TOKEN_KEY, token)
     sessionStorage.setItem(USUARIO_KEY, JSON.stringify(usuarioConRol))
+  },
+  actualizarUsuario: (actualizacion) => {
+    const usuario = JSON.parse(sessionStorage.getItem(USUARIO_KEY) ?? 'null')
+    if (!usuario) return null
+    const actualizado = { ...usuario, ...actualizacion }
+    sessionStorage.setItem(USUARIO_KEY, JSON.stringify(actualizado))
+    return actualizado
   },
   limpiar: () => {
     sessionStorage.removeItem(TOKEN_KEY)

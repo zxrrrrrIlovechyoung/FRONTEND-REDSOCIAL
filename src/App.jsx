@@ -5,6 +5,7 @@ import RutaPorRol from './routes/RutaPorRol'
 import Login from './pages/Login'
 import Registro from './pages/Registro'
 import RecuperarPassword from './pages/RecuperarPassword'
+import SeleccionarEntrada from './pages/SeleccionarEntrada'
 import InicioPublico from './pages/InicioPublico'
 import Inicio from './pages/Inicio'
 import Perfil from './pages/Perfil'
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
           <Route path="/recuperar-password" element={<RecuperarPassword />} />
+          <Route path="/seleccionar-entrada" element={<SeleccionarEntrada />} />
           <Route element={<RutaProtegida />}>
             <Route path="/inicio" element={<Inicio />} />
             <Route path="/perfil" element={<Perfil />} />

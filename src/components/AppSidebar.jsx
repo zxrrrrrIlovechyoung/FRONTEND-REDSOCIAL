@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 
@@ -19,15 +19,20 @@ const herramientas = [
 ]
 
 export default function AppSidebar({ activo = 'Inicio' }) {
+  const navigate = useNavigate()
   const { usuario, perfilActual } = useAuth()
   const [sidebarContraido, setSidebarContraido] = useState(false)
   const nombre = perfilActual?.nombrePerfil || usuario?.nombrePerfil || usuario?.nombreUsuario || usuario?.usuario || 'Raul'
   const nombreUsuario = perfilActual?.nombreUsuario || usuario?.nombreUsuario || usuario?.usuario || nombre
   const fotoPerfilUrl = normalizarMediaUrl(perfilActual?.fotoPerfilUrl)
-  const rol = usuario?.rol ?? 'usuario'
+  const rol = usuario?.rolActivo ?? usuario?.rol ?? 'usuario'
   const herramientasVisibles = ['moderador', 'admin'].includes(rol)
     ? [...herramientas, { icono: '!', texto: 'Moderador', ruta: '/moderador' }]
     : herramientas
+
+  const abrirCrearMomento = () => {
+    navigate('/inicio?crear=1')
+  }
 
   return (
     <aside className={`sidebar${sidebarContraido ? ' contraido' : ''}`}>
@@ -64,7 +69,7 @@ export default function AppSidebar({ activo = 'Inicio' }) {
                 <button
                   className={`nav-item${activo === item.texto ? ' activo' : ''}`}
                   key={item.texto}
-                  onClick={() => item.texto === 'Crear' && window.dispatchEvent(new Event('abrir-crear-momento'))}
+                  onClick={abrirCrearMomento}
                 >
                   {contenido}
                 </button>
