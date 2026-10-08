@@ -1,48 +1,29 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { momentoService } from '../services/momentoService'
+import { formatearFechaMomento } from '../utils/fechas'
 
-const publicacionesPublicas = [
-  {
-    id: 1,
-    autor: 'Valeria Cruz',
-    usuario: '@vale.cruz',
-    avatar: 'VC',
-    tiempo: 'Hace 12 min',
-    imagen: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'Hay dias que solo necesitan luz bonita, buena musica y alguien con quien reirse sin mirar el reloj.',
-    likes: '1,284',
-  },
-  {
-    id: 2,
-    autor: 'Mateo Rios',
-    usuario: '@mateorios',
-    avatar: 'MR',
-    tiempo: 'Hace 38 min',
-    imagen: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'Me gusta pensar que crecer tambien es aprender a caminar mas lento cuando algo vale la pena.',
-    likes: '943',
-  },
-  {
-    id: 3,
-    autor: 'Camila Torres',
-    usuario: '@cami.t',
-    avatar: 'CT',
-    tiempo: 'Hace 1 h',
-    imagen: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'Un recuerdo no tiene que ser perfecto para quedarse contigo. A veces basta con que haya sido real.',
-    likes: '2,019',
-  },
-  {
-    id: 4,
-    autor: 'Diego Luna',
-    usuario: '@diegoluna',
-    avatar: 'DL',
-    tiempo: 'Hace 2 h',
-    imagen: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80',
-    pensamiento: 'Entre tarea, amigos y planes que cambian, tambien estamos construyendo quienes queremos ser.',
-    likes: '718',
-  },
-]
+const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:5079/api').replace(/\/api\/?$/, '')
+
+const normalizarMediaUrl = (url) => {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  return `${apiBaseUrl}${url.startsWith('/') ? url : `/${url}`}`
+}
+
+const inicialesDe = (texto) => (texto || 'MM').replace('@', '').slice(0, 2).toUpperCase()
+
+const mapearMomento = (momento) => ({
+  id: momento.idMomento,
+  autor: momento.autor || 'Moment',
+  usuario: momento.usuario || '@moment',
+  avatar: momento.avatar || inicialesDe(momento.autor || momento.usuario),
+  tiempo: formatearFechaMomento(momento.fechaCreacion),
+  imagen: normalizarMediaUrl(momento.archivoUrl),
+  tipoAdjunto: momento.tipoAdjunto,
+  pensamiento: momento.texto,
+  likes: Number(momento.totalMeGusta || 0).toLocaleString('es-MX'),
+})
 
 const herramientasPublicas = [
   { icono: '⌂', texto: 'Inicio' },
@@ -55,8 +36,22 @@ const herramientasPublicas = [
 export default function InicioPublico() {
   const navigate = useNavigate()
   const [mostrarRegistro, setMostrarRegistro] = useState(false)
+  const [publicaciones, setPublicaciones] = useState([])
+  const [cargando, setCargando] = useState(true)
 
   const pedirCuenta = () => setMostrarRegistro(true)
+
+  useEffect(() => {
+    let activo = true
+
+    momentoService.feedPublico().then((resultado) => {
+      if (!activo) return
+      setPublicaciones(resultado.exito ? (resultado.datos ?? []).map(mapearMomento) : [])
+      setCargando(false)
+    })
+
+    return () => { activo = false }
+  }, [])
 
   return (
     <main className="app-shell public-shell">
@@ -90,8 +85,27 @@ export default function InicioPublico() {
         </div>
 
         <div className="post-list">
-          {[...publicacionesPublicas, ...publicacionesPublicas].map((post, index) => (
-            <article className="post-card" key={`${post.id}-${index}`}>
+          {cargando && (
+            <article className="post-card feed-loading-card">
+              <div className="skeleton avatar" />
+              <div>
+                <div className="skeleton line wide" />
+                <div className="skeleton-moment" />
+              </div>
+            </article>
+          )}
+
+          {!cargando && publicaciones.length === 0 && (
+            <section className="empty-feed">
+              <span>Moment</span>
+              <h2>Aún no hay momentos compartidos</h2>
+              <p>Cuando la comunidad publique, los momentos recientes aparecerán aquí.</p>
+              <button onClick={() => navigate('/registro')}>Crear cuenta</button>
+            </section>
+          )}
+
+          {!cargando && publicaciones.map((post) => (
+            <article className="post-card" key={post.id}>
               <header className="post-top">
                 <div className="author">
                   <div className="author-avatar">{post.avatar}</div>
@@ -104,7 +118,15 @@ export default function InicioPublico() {
               </header>
 
               <div className="post-image-wrap">
-                <img className="post-image" src={post.imagen} alt={`Momento compartido por ${post.autor}`} />
+                {post.imagen ? (
+                  post.tipoAdjunto === 'video'
+                    ? <video className="post-image" src={post.imagen} controls />
+                    : <img className="post-image" src={post.imagen} alt={`Momento compartido por ${post.autor}`} />
+                ) : (
+                  <div className="post-image post-text-only">
+                    <p>{post.pensamiento}</p>
+                  </div>
+                )}
               </div>
 
               <div className="post-actions">

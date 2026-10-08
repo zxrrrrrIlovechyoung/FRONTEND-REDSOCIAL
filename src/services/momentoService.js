@@ -18,6 +18,7 @@ const llamar = async (peticion) => {
 
 export const momentoService = {
   feed: () => llamar(() => httpClient.get('/momentos')),
+  feedPublico: () => llamar(() => httpClient.get('/momentos/publico')),
   misMomentos: ({ cursor, cantidad = 30 } = {}) => llamar(() => httpClient.get('/momentos/me', {
     params: { cursor, cantidad },
   })),
