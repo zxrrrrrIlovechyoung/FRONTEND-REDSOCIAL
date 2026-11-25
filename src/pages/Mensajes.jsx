@@ -50,11 +50,17 @@ export default function Mensajes() {
 
     connection.on('UsuariosEnLinea', (ids) => setOnlineIds(ids ?? []))
     connection.on('MensajeRecibido', (mensaje) => {
-      setMensajes((actuales) => (
-        chatActivoRef.current?.hash === mensaje.hash && !actuales.some((item) => item.idMensaje === mensaje.idMensaje)
-          ? [...actuales, mensaje]
-          : actuales
-      ))
+      const chatActual = chatActivoRef.current
+      if (chatActual?.hash === mensaje.hash) {
+        setMensajes((actuales) => (
+          actuales.some((item) => item.idMensaje === mensaje.idMensaje)
+            ? actuales
+            : [...actuales, mensaje]
+        ))
+        chatService.marcarLeidos(mensaje.hash).then(() => {
+          window.dispatchEvent(new Event('mensajes-no-leidos-actualizado'))
+        })
+      }
       chatService.conversaciones().then((resultado) => {
         if (resultado.exito) setConversaciones(resultado.datos ?? [])
       })
@@ -89,10 +95,14 @@ export default function Mensajes() {
       fotoPerfilUrl: contacto.fotoPerfilUrl,
       enLinea: onlineIds.includes(contacto.idUsuario) || contacto.enLinea,
     })
+    await chatService.marcarLeidos(abierto.datos.hash)
+    window.dispatchEvent(new Event('mensajes-no-leidos-actualizado'))
   }
 
-  const abrirConversacion = (chat) => {
+  const abrirConversacion = async (chat) => {
     setChatActivo(chat)
+    await chatService.marcarLeidos(chat.hash)
+    window.dispatchEvent(new Event('mensajes-no-leidos-actualizado'))
   }
 
   const enviarMensaje = (e) => {

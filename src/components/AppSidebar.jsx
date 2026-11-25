@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { chatService } from '../services/chatService'
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:5079/api').replace(/\/api\/?$/, '')
 
@@ -25,6 +26,7 @@ export default function AppSidebar({ activo = 'Inicio' }) {
   const { usuario, perfilActual } = useAuth()
   const [mobileNavOculta, setMobileNavOculta] = useState(false)
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false)
+  const [mensajesNoLeidos, setMensajesNoLeidos] = useState(0)
   const sidebarStorageKey = useMemo(() => (
     `${SIDEBAR_KEY_BASE}_${usuario?.idUsuario ?? usuario?.nombreUsuario ?? 'anon'}`
   ), [usuario?.idUsuario, usuario?.nombreUsuario])
@@ -44,6 +46,26 @@ export default function AppSidebar({ activo = 'Inicio' }) {
   const abrirCrearMomento = () => {
     navigate('/inicio?crear=1')
   }
+
+  useEffect(() => {
+    let activo = true
+
+    const cargarNoLeidos = async () => {
+      const resultado = await chatService.noLeidos()
+      if (activo && resultado.exito) setMensajesNoLeidos(Number(resultado.datos?.total ?? 0))
+    }
+
+    const actualizarDesdeChat = () => cargarNoLeidos()
+    cargarNoLeidos()
+    const intervalo = window.setInterval(cargarNoLeidos, 15000)
+    window.addEventListener('mensajes-no-leidos-actualizado', actualizarDesdeChat)
+
+    return () => {
+      activo = false
+      window.clearInterval(intervalo)
+      window.removeEventListener('mensajes-no-leidos-actualizado', actualizarDesdeChat)
+    }
+  }, [])
 
   useEffect(() => {
     const guardadoUsuario = localStorage.getItem(sidebarStorageKey)
@@ -92,8 +114,11 @@ export default function AppSidebar({ activo = 'Inicio' }) {
         </button>
         <Link className="mobile-topbar-brand" to="/inicio">Moment</Link>
         <Link className="mobile-messages-link" to="/mensajes" aria-label="Abrir mensajes">
-          <span>✉</span>
-          <i>{'3'}</i>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6.5h16v11H4z" />
+            <path d="m4.5 7 7.5 6 7.5-6" />
+          </svg>
+          {mensajesNoLeidos > 0 && <i>{mensajesNoLeidos > 99 ? '99+' : mensajesNoLeidos}</i>}
         </Link>
       </header>
 

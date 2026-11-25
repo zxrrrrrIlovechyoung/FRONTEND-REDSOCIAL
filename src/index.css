@@ -6892,7 +6892,16 @@ pre {
   .mobile-messages-link {
     position: relative;
     justify-self: end;
-    font-size: 20px;
+  }
+
+  .mobile-messages-link svg {
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .mobile-messages-link i {
@@ -7550,7 +7559,7 @@ pre {
   .favorites-page {
     max-width: none;
     margin: 0;
-    padding: 18px 14px 100px;
+    padding: 78px 14px 126px;
   }
 
   .search-profiles,

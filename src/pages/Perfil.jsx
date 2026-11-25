@@ -66,6 +66,8 @@ export default function Perfil() {
   const inputFotoRef = useRef(null)
   const imagenFotoRef = useRef(null)
   const dragFotoRef = useRef(null)
+  const punterosFotoRef = useRef(new Map())
+  const pellizcoFotoRef = useRef(null)
   const sentinelRef = useRef(null)
   const nombre = usuario?.nombreUsuario || usuario?.usuario || 'Raul'
   const usuarioPerfil = `@${String(perfil?.nombreUsuario || nombre).toLowerCase()}`
@@ -165,6 +167,9 @@ export default function Perfil() {
   const cerrarModalFoto = () => {
     setModalFotoAbierto(false)
     setArchivoFoto(null)
+    punterosFotoRef.current.clear()
+    pellizcoFotoRef.current = null
+    dragFotoRef.current = null
     if (previewFoto) URL.revokeObjectURL(previewFoto)
     setPreviewFoto('')
     setZoomFoto(1)
@@ -175,6 +180,18 @@ export default function Perfil() {
 
   const iniciarArrastreFoto = (e) => {
     e.currentTarget.setPointerCapture(e.pointerId)
+    punterosFotoRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    if (punterosFotoRef.current.size >= 2) {
+      const [primero, segundo] = [...punterosFotoRef.current.values()]
+      pellizcoFotoRef.current = {
+        distanciaInicial: Math.hypot(segundo.x - primero.x, segundo.y - primero.y),
+        zoomInicial: zoomFoto,
+      }
+      dragFotoRef.current = null
+      return
+    }
+
     dragFotoRef.current = {
       pointerId: e.pointerId,
       inicioX: e.clientX,
@@ -184,6 +201,20 @@ export default function Perfil() {
   }
 
   const arrastrarFoto = (e) => {
+    if (punterosFotoRef.current.has(e.pointerId)) {
+      punterosFotoRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    }
+
+    if (punterosFotoRef.current.size >= 2 && pellizcoFotoRef.current) {
+      const [primero, segundo] = [...punterosFotoRef.current.values()]
+      const distanciaActual = Math.hypot(segundo.x - primero.x, segundo.y - primero.y)
+      const { distanciaInicial, zoomInicial } = pellizcoFotoRef.current
+      const factor = distanciaInicial ? distanciaActual / distanciaInicial : 1
+      const zoom = Math.min(3, Math.max(1, Number((zoomInicial * factor).toFixed(2))))
+      setZoomFoto(zoom)
+      return
+    }
+
     const drag = dragFotoRef.current
     if (!drag || drag.pointerId !== e.pointerId) return
 
@@ -194,6 +225,8 @@ export default function Perfil() {
   }
 
   const terminarArrastreFoto = (e) => {
+    punterosFotoRef.current.delete(e.pointerId)
+    if (punterosFotoRef.current.size < 2) pellizcoFotoRef.current = null
     if (dragFotoRef.current?.pointerId === e.pointerId) dragFotoRef.current = null
   }
 
@@ -389,7 +422,7 @@ export default function Perfil() {
                     >
                       {momento.leGusta ? '♥' : '♡'}
                     </button>
-                    <button aria-label="Ver comentarios" onClick={() => navigate(`/?momento=${momento.id}`)}>
+                    <button aria-label="Ver comentarios" onClick={() => navigate(`/inicio?momento=${momento.id}`)}>
                       <svg className="comment-action-icon" viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M8 4h8a4 4 0 0 1 4 4v4a4 4 0 0 1-4 4h-4l-4 4v-4a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4Z" />
                       </svg>
@@ -404,7 +437,7 @@ export default function Perfil() {
                   <strong>{momento.likes.toLocaleString('es-MX')} me gusta</strong>
                   <p>{momento.texto}</p>
                   {momento.linkUrl && <a className="post-link" href={momento.linkUrl} target="_blank" rel="noreferrer">Abrir enlace</a>}
-                  <button className="comments-btn" onClick={() => navigate(`/?momento=${momento.id}`)}>
+                  <button className="comments-btn" onClick={() => navigate(`/inicio?momento=${momento.id}`)}>
                     Ver {momento.comentarios.toLocaleString('es-MX')} comentarios
                   </button>
                 </div>
@@ -460,7 +493,7 @@ export default function Perfil() {
               )}
             </div>
 
-            <p className="profile-photo-hint">Arrastra para acomodar. Usa la rueda para acercar. Doble click centra la foto.</p>
+            <p className="profile-photo-hint">Arrastra para acomodar. Pellizca o usa la rueda para acercar. Doble click centra la foto.</p>
 
             {errorFoto && <p className="profile-form-error">{errorFoto}</p>}
 

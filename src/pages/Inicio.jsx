@@ -296,6 +296,7 @@ export default function Inicio() {
 
   const abrirPantallaComentarios = (post) => {
     setComentariosCerrando(false)
+    setRespondiendoA(null)
     setComentariosPantalla(post)
     if (!comentariosPorMomento[post.id]) cargarComentarios(post.id)
   }
@@ -305,6 +306,7 @@ export default function Inicio() {
     window.setTimeout(() => {
       setComentariosPantalla(null)
       setComentariosCerrando(false)
+      setRespondiendoA(null)
     }, 220)
   }
 
@@ -314,7 +316,7 @@ export default function Inicio() {
     const post = feed.find((item) => Number(item.id) === idMomento)
     if (!post) return
     abrirPantallaComentarios(post)
-    navigate('/', { replace: true })
+    navigate('/inicio', { replace: true })
   }, [feed, navigate, searchParams])
 
   const alternarComentarioRapido = (post) => {
@@ -833,27 +835,29 @@ export default function Inicio() {
               {(comentariosPorMomento[comentariosPantalla.id] ?? []).map((comentario) => renderComentario(comentario, comentariosPantalla))}
             </div>
 
-            <footer className="comments-screen-composer">
-              <div className="comment-composer">
-                <input
-                  value={comentarioTexto[comentariosPantalla.id] || ''}
-                  onChange={(e) => setComentarioTexto((actual) => ({ ...actual, [comentariosPantalla.id]: e.target.value.slice(0, 300) }))}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      publicarComentario(comentariosPantalla.id, null)
-                    }
-                  }}
-                  placeholder="Escribe un comentario..."
-                  maxLength={300}
-                  disabled={comentariosPublicando[comentariosPantalla.id]}
-                />
-                <button onClick={() => publicarComentario(comentariosPantalla.id, null)} disabled={comentariosPublicando[comentariosPantalla.id]}>
-                  {comentariosPublicando[comentariosPantalla.id] ? <span className="spinner" aria-hidden="true" /> : 'Publicar'}
-                </button>
-              </div>
-              {comentariosError[comentariosPantalla.id] && <p className="comments-error">{comentariosError[comentariosPantalla.id]}</p>}
-            </footer>
+            {!respondiendoA && (
+              <footer className="comments-screen-composer">
+                <div className="comment-composer">
+                  <input
+                    value={comentarioTexto[comentariosPantalla.id] || ''}
+                    onChange={(e) => setComentarioTexto((actual) => ({ ...actual, [comentariosPantalla.id]: e.target.value.slice(0, 300) }))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        publicarComentario(comentariosPantalla.id, null)
+                      }
+                    }}
+                    placeholder="Escribe un comentario..."
+                    maxLength={300}
+                    disabled={comentariosPublicando[comentariosPantalla.id]}
+                  />
+                  <button onClick={() => publicarComentario(comentariosPantalla.id, null)} disabled={comentariosPublicando[comentariosPantalla.id]}>
+                    {comentariosPublicando[comentariosPantalla.id] ? <span className="spinner" aria-hidden="true" /> : 'Publicar'}
+                  </button>
+                </div>
+                {comentariosError[comentariosPantalla.id] && <p className="comments-error">{comentariosError[comentariosPantalla.id]}</p>}
+              </footer>
+            )}
           </section>
         </div>
       )}
