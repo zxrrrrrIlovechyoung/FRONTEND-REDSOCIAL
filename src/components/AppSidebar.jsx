@@ -23,6 +23,8 @@ const SIDEBAR_KEY_BASE = 'moment_sidebar_contraido'
 export default function AppSidebar({ activo = 'Inicio' }) {
   const navigate = useNavigate()
   const { usuario, perfilActual } = useAuth()
+  const [mobileNavOculta, setMobileNavOculta] = useState(false)
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false)
   const sidebarStorageKey = useMemo(() => (
     `${SIDEBAR_KEY_BASE}_${usuario?.idUsuario ?? usuario?.nombreUsuario ?? 'anon'}`
   ), [usuario?.idUsuario, usuario?.nombreUsuario])
@@ -49,6 +51,22 @@ export default function AppSidebar({ activo = 'Inicio' }) {
     setSidebarContraido((guardadoUsuario ?? guardadoGeneral) === 'true')
   }, [sidebarStorageKey])
 
+  useEffect(() => {
+    let ultimaPosicion = window.scrollY
+
+    const manejarScroll = () => {
+      const posicionActual = Math.max(window.scrollY, 0)
+      const diferencia = posicionActual - ultimaPosicion
+
+      if (Math.abs(diferencia) < 6) return
+      setMobileNavOculta(posicionActual > ultimaPosicion && posicionActual > 72)
+      ultimaPosicion = posicionActual
+    }
+
+    window.addEventListener('scroll', manejarScroll, { passive: true })
+    return () => window.removeEventListener('scroll', manejarScroll)
+  }, [])
+
   const alternarSidebar = () => {
     setSidebarContraido((valor) => {
       const siguiente = !valor
@@ -59,8 +77,49 @@ export default function AppSidebar({ activo = 'Inicio' }) {
   }
 
   return (
-    <aside className={`sidebar${sidebarContraido ? ' contraido' : ''}`}>
-      <div>
+    <aside className={`sidebar${sidebarContraido ? ' contraido' : ''}${mobileNavOculta ? ' mobile-nav-oculta' : ''}`}>
+      <header className="mobile-topbar">
+        <button
+          className={`mobile-menu-button${menuMovilAbierto ? ' abierto' : ''}`}
+          type="button"
+          aria-label={menuMovilAbierto ? 'Cerrar menú' : 'Abrir menú'}
+          aria-expanded={menuMovilAbierto}
+          onClick={() => setMenuMovilAbierto((valor) => !valor)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        <Link className="mobile-topbar-brand" to="/inicio">Moment</Link>
+        <Link className="mobile-messages-link" to="/mensajes" aria-label="Abrir mensajes">
+          <span>✉</span>
+          <i>{'3'}</i>
+        </Link>
+      </header>
+
+      {menuMovilAbierto && (
+        <div className="mobile-drawer-layer" role="presentation" onClick={() => setMenuMovilAbierto(false)}>
+          <aside className="mobile-drawer" role="dialog" aria-label="Menú principal" onClick={(event) => event.stopPropagation()}>
+            <div className="mobile-drawer-head">
+              <div>
+                <span className="brand-mark">M</span>
+                <strong>Moment</strong>
+              </div>
+              <button type="button" onClick={() => setMenuMovilAbierto(false)} aria-label="Cerrar menú">×</button>
+            </div>
+            <nav className="mobile-drawer-links">
+              <Link className={activo === 'Inicio' ? 'activo' : ''} to="/inicio" onClick={() => setMenuMovilAbierto(false)}>⌂ <span>Inicio</span></Link>
+              <Link className={activo === 'Perfil' ? 'activo' : ''} to="/perfil" onClick={() => setMenuMovilAbierto(false)}>◉ <span>Mi perfil</span></Link>
+              <Link className={activo === 'Buscar' ? 'activo' : ''} to="/buscar" onClick={() => setMenuMovilAbierto(false)}>⌕ <span>Buscar</span></Link>
+              <Link className={activo === 'Favoritos' ? 'activo' : ''} to="/favoritos" onClick={() => setMenuMovilAbierto(false)}>♡ <span>Favoritos</span></Link>
+              <Link className={activo === 'Configuracion' ? 'activo' : ''} to="/configuracion" onClick={() => setMenuMovilAbierto(false)}>⚙ <span>Configuración</span></Link>
+              <Link to="/mensajes" onClick={() => setMenuMovilAbierto(false)}>✉ <span>Mensajes</span></Link>
+            </nav>
+          </aside>
+        </div>
+      )}
+
+      <div className="desktop-sidebar-content">
         <div className="sidebar-head">
           <Link className="brand" to="/inicio">
             <span className="brand-mark">M</span>
@@ -124,6 +183,34 @@ export default function AppSidebar({ activo = 'Inicio' }) {
           </button>
         )}
       </div>
+
+      <nav className="mobile-nav" aria-label="Navegación móvil">
+        <div className="mobile-nav-group">
+          <Link className={`mobile-nav-item${activo === 'Inicio' ? ' activo' : ''}`} to="/inicio">
+            <span className="mobile-nav-icon">⌂</span>
+            <span>Inicio</span>
+          </Link>
+          <Link className={`mobile-nav-item${activo === 'Buscar' ? ' activo' : ''}`} to="/buscar">
+            <span className="mobile-nav-icon">⌕</span>
+            <span>Buscar</span>
+          </Link>
+        </div>
+
+        <button className="mobile-nav-share" type="button" onClick={abrirCrearMomento} aria-label="Compartir un momento">
+          <span>+</span>
+        </button>
+
+        <div className="mobile-nav-group">
+          <Link className={`mobile-nav-item${activo === 'Favoritos' ? ' activo' : ''}`} to="/favoritos">
+            <span className="mobile-nav-icon">♡</span>
+            <span>Favoritos</span>
+          </Link>
+          <Link className={`mobile-nav-item${activo === 'Perfil' ? ' activo' : ''}`} to="/perfil">
+            <span className="mobile-nav-icon">◉</span>
+            <span>Perfil</span>
+          </Link>
+        </div>
+      </nav>
     </aside>
   )
 }

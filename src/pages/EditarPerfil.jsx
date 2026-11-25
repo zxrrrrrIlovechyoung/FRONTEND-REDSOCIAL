@@ -244,9 +244,9 @@ export default function EditarPerfil() {
       return
     }
 
-    // Conservamos la imagen completa dentro del avatar circular, sin forzar
-    // un zoom que corte la parte superior o inferior.
-    const escalaBase = Math.min(size / imagen.naturalWidth, size / imagen.naturalHeight)
+    // El resultado debe coincidir con el editor: la imagen cubre el recorte
+    // cuadrado y el usuario decide qué parte queda visible con arrastre y zoom.
+    const escalaBase = Math.max(size / imagen.naturalWidth, size / imagen.naturalHeight)
     const escala = escalaBase * zoomFoto
     const ancho = imagen.naturalWidth * escala
     const alto = imagen.naturalHeight * escala

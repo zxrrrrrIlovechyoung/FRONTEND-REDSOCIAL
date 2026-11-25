@@ -240,7 +240,7 @@ export default function Configuracion() {
 
   return (
     <main className="app-shell">
-      <AppSidebar />
+      <AppSidebar activo="Configuracion" />
 
       <section className="settings-page" aria-label="Configuracion">
         <header className="settings-header">

@@ -147,7 +147,7 @@ export default function Mensajes() {
     <main className="app-shell">
       <AppSidebar activo="Mensajes" />
 
-      <section className="messages-page" aria-label="Mensajes">
+      <section className={`messages-page${chatActivo ? ' chat-abierto' : ''}`} aria-label="Mensajes">
         <aside className="messages-list">
           <div className="messages-title">
             <p className="feed-kicker">Conversaciones</p>
@@ -212,6 +212,7 @@ export default function Mensajes() {
           ) : (
             <>
               <header className="chat-room-head">
+                <button className="chat-back-button" type="button" onClick={() => setChatActivo(null)} aria-label="Volver a conversaciones">‹</button>
                 {pintarAvatar(chatActivo)}
                 <div>
                   <strong>{chatActivo.nombre}</strong>

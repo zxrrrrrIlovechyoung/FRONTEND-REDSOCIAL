@@ -84,6 +84,9 @@ export default function Inicio() {
   const [linkMomento, setLinkMomento] = useState('')
   const [feed, setFeed] = useState([])
   const [cargandoFeed, setCargandoFeed] = useState(true)
+  const [actualizandoFeed, setActualizandoFeed] = useState(false)
+  const [distanciaPull, setDistanciaPull] = useState(0)
+  const inicioPullRef = useRef(null)
   const [publicando, setPublicando] = useState(false)
   const [errorCrear, setErrorCrear] = useState('')
   const [menuPostAbierto, setMenuPostAbierto] = useState(null)
@@ -156,30 +159,74 @@ export default function Inicio() {
   }, [])
 
   useEffect(() => {
+    const overflowOriginal = document.body.style.overflow
+    if (comentariosPantalla) document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = overflowOriginal
+    }
+  }, [comentariosPantalla])
+
+  useEffect(() => {
     if (searchParams.get('crear') !== '1') return
 
     setCrearAbierto(true)
     navigate('/inicio', { replace: true })
   }, [navigate, searchParams])
 
+  const cargarFeed = async (inicial = false) => {
+    if (inicial) setCargandoFeed(true)
+    else setActualizandoFeed(true)
+
+    const respuesta = await momentoService.feed()
+    if (respuesta.exito) setFeed((respuesta.datos ?? []).map(mapearMomento))
+
+    if (inicial) setCargandoFeed(false)
+    else setActualizandoFeed(false)
+  }
+
   useEffect(() => {
     let activo = true
 
-    const cargarFeed = async () => {
+    const cargarFeedInicial = async () => {
       setCargandoFeed(true)
       const respuesta = await momentoService.feed()
       if (!activo) return
 
       setFeed(respuesta.exito ? (respuesta.datos ?? []).map(mapearMomento) : [])
-
       setCargandoFeed(false)
     }
 
-    cargarFeed()
+    cargarFeedInicial()
     return () => {
       activo = false
     }
   }, [])
+
+  const iniciarPull = (event) => {
+    if (window.scrollY > 0 || actualizandoFeed || cargandoFeed || crearAbierto) return
+    inicioPullRef.current = event.touches[0]?.clientY ?? null
+  }
+
+  const moverPull = (event) => {
+    if (inicioPullRef.current === null || window.scrollY > 0) return
+
+    const desplazamiento = (event.touches[0]?.clientY ?? 0) - inicioPullRef.current
+    if (desplazamiento <= 0) {
+      setDistanciaPull(0)
+      return
+    }
+
+    if (desplazamiento > 8) event.preventDefault()
+    setDistanciaPull(Math.min(desplazamiento * 0.45, 96))
+  }
+
+  const terminarPull = () => {
+    const debeActualizar = distanciaPull >= 58
+    inicioPullRef.current = null
+    setDistanciaPull(0)
+    if (debeActualizar) cargarFeed()
+  }
 
   const animarCorazon = (id) => {
     setCorazonesAnimados((actual) => ({ ...actual, [id]: (actual[id] || 0) + 1 }))
@@ -505,10 +552,26 @@ export default function Inicio() {
   }
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell${comentariosPantalla ? ' comments-open' : ''}`}>
       <AppSidebar activo="Inicio" />
 
-      <section className="feed" aria-label="Publicaciones">
+      <section
+        className="feed"
+        aria-label="Publicaciones"
+        onTouchStart={iniciarPull}
+        onTouchMove={moverPull}
+        onTouchEnd={terminarPull}
+        onTouchCancel={terminarPull}
+      >
+        <div
+          className={`feed-pull-indicator${actualizandoFeed ? ' actualizando' : ''}`}
+          style={{ height: `${distanciaPull}px`, opacity: distanciaPull > 0 || actualizandoFeed ? 1 : 0 }}
+          aria-live="polite"
+        >
+          <span className="feed-pull-icon">↻</span>
+          <span>{actualizandoFeed ? 'Actualizando...' : distanciaPull >= 58 ? 'Suelta para actualizar' : 'Desliza para actualizar'}</span>
+        </div>
+
         <div className="feed-header">
           <div>
             <p className="feed-kicker">Hoy en tu escuela</p>
