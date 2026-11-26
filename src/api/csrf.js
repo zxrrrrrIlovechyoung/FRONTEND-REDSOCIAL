@@ -15,8 +15,12 @@ export const csrf = {
     return token
   },
   cargar: async (forzar = false) => {
+    // Todas las peticiones comparten la misma renovación. Esto evita que dos
+    // reintentos simultáneos sobrescriban la cookie y el token en distinto orden.
+    if (cargaPendiente) return cargaPendiente
     if (token && !forzar) return token
-    if (cargaPendiente && !forzar) return cargaPendiente
+
+    if (forzar) token = ''
 
     cargaPendiente = clienteCsrf.get('/auth/csrf', { timeout: 10000 })
       .then(({ data }) => csrf.guardar(data?.datos?.token))
