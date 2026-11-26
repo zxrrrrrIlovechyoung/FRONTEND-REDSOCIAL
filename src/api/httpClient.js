@@ -9,13 +9,13 @@ const httpClient = axios.create({
 })
 
 // Adjunta el JWT legado y el token CSRF a las peticiones mutables.
-httpClient.interceptors.request.use((config) => {
+httpClient.interceptors.request.use(async (config) => {
   const token = tokenStorage.obtener()
   if (token) config.headers.Authorization = `Bearer ${token}`
 
   const metodo = String(config.method ?? 'get').toUpperCase()
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(metodo)) {
-    const csrfToken = csrf.obtener()
+    const csrfToken = await csrf.cargar()
     if (csrfToken) config.headers['X-CSRF-TOKEN'] = csrfToken
   }
 
@@ -25,7 +25,25 @@ httpClient.interceptors.request.use((config) => {
 // Si el token expiró o es inválido, cerramos sesión.
 httpClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const mensaje = error.response?.data?.mensaje
+    const config = error.config
+    const metodo = String(config?.method ?? 'get').toUpperCase()
+    const esFalloCsrf = error.response?.status === 400
+      && typeof mensaje === 'string'
+      && mensaje.includes('sesión de seguridad')
+      && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(metodo)
+
+    if (esFalloCsrf && config && !config._reintentoCsrf) {
+      config._reintentoCsrf = true
+      const csrfToken = await csrf.cargar(true)
+      if (csrfToken) {
+        config.headers = config.headers ?? {}
+        config.headers['X-CSRF-TOKEN'] = csrfToken
+        return httpClient(config)
+      }
+    }
+
     if (error.response?.status === 401 && tokenStorage.obtener()) {
       tokenStorage.limpiar()
       window.location.href = '/login'

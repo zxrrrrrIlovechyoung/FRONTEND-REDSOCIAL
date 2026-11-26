@@ -36,22 +36,23 @@ export function AuthProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    authService.csrf()
-
-    if (tokenStorage.obtener()) {
-      setRestaurandoSesion(false)
-      return undefined
-    }
-
     let cancelado = false
-    authService.sesion().then((resultado) => {
+
+    const restaurarSesion = async () => {
+      const sesionGuardada = tokenStorage.obtener()
+      const [, resultadoSesion] = await Promise.all([
+        authService.csrf(),
+        sesionGuardada ? Promise.resolve(null) : authService.sesion(),
+      ])
+
       if (cancelado) return
-      if (resultado.exito && resultado.datos) {
-        setUsuario(tokenStorage.guardarUsuario(resultado.datos))
+      if (resultadoSesion?.exito && resultadoSesion.datos) {
+        setUsuario(tokenStorage.guardarUsuario(resultadoSesion.datos))
       }
       setRestaurandoSesion(false)
-    })
+    }
 
+    restaurarSesion()
     return () => { cancelado = true }
   }, [])
 
