@@ -105,7 +105,8 @@ export default function Registro() {
     const timer = window.setTimeout(async () => {
       const resultado = await verificarEmailDisponible(email)
       if (cancelado) return
-      setEstadoEmail(resultado.exito && resultado.datos?.disponible ? 'disponible' : 'ocupado')
+      if (resultado.exito) setEstadoEmail(resultado.datos?.disponible ? 'disponible' : 'ocupado')
+      else setEstadoEmail('error')
     }, 450)
 
     return () => {
@@ -134,7 +135,8 @@ export default function Registro() {
     const timer = window.setTimeout(async () => {
       const resultado = await verificarUsuarioDisponible(nombre)
       if (cancelado) return
-      setEstadoUsuario(resultado.exito && resultado.datos?.disponible ? 'disponible' : 'ocupado')
+      if (resultado.exito) setEstadoUsuario(resultado.datos?.disponible ? 'disponible' : 'ocupado')
+      else setEstadoUsuario('error')
     }, 450)
 
     return () => {
@@ -215,7 +217,9 @@ export default function Registro() {
     if (pasoActual === 1) {
       if (!form.email.trim()) nuevosErrores.email = 'El correo es obligatorio'
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) nuevosErrores.email = 'Ingresa un correo válido'
-      else if (estadoEmail !== 'disponible') nuevosErrores.email = 'Elige un correo disponible'
+      else if (estadoEmail === 'ocupado') nuevosErrores.email = 'Ese correo ya está registrado'
+      else if (estadoEmail === 'error') nuevosErrores.email = 'Ups, algo salió mal. Revisa tu conexión e inténtalo de nuevo'
+      else if (estadoEmail !== 'disponible') nuevosErrores.email = 'Espera a que terminemos de comprobar el correo'
     }
 
     if (pasoActual === 2) {
@@ -237,7 +241,9 @@ export default function Registro() {
       if (!form.nombreUsuario.trim()) nuevosErrores.nombreUsuario = 'El nombre de usuario es obligatorio'
       else if (form.nombreUsuario.trim().length < 3) nuevosErrores.nombreUsuario = 'Debe tener al menos 3 caracteres'
       else if (!form.nombreUsuario.includes('_')) nuevosErrores.nombreUsuario = 'Debe incluir al menos un guion bajo'
-      else if (estadoUsuario !== 'disponible') nuevosErrores.nombreUsuario = 'Elige un usuario disponible'
+      else if (estadoUsuario === 'ocupado') nuevosErrores.nombreUsuario = 'Ese usuario no está disponible'
+      else if (estadoUsuario === 'error') nuevosErrores.nombreUsuario = 'Ups, algo salió mal. Revisa tu conexión e inténtalo de nuevo'
+      else if (estadoUsuario !== 'disponible') nuevosErrores.nombreUsuario = 'Espera a que terminemos de comprobar el usuario'
     }
 
     setErrores(nuevosErrores)
@@ -332,6 +338,7 @@ export default function Registro() {
     verificando: 'Comprobando disponibilidad...',
     disponible: 'Usuario disponible',
     ocupado: 'Usuario no disponible',
+    error: 'Ups, algo salió mal. Inténtalo de nuevo.',
     invalido: 'Usa letras, números, punto y al menos un guion bajo',
   }[estadoUsuario]
 
@@ -340,6 +347,7 @@ export default function Registro() {
     verificando: 'Comprobando disponibilidad...',
     disponible: 'Correo disponible',
     ocupado: 'Correo no disponible',
+    error: 'Ups, algo salió mal. Inténtalo de nuevo.',
     invalido: 'Ingresa un correo válido',
   }[estadoEmail]
 

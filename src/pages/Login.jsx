@@ -114,9 +114,11 @@ export default function Login() {
       }
 
       setIntentoFallido(true)
-      const mensaje = resultado.mensaje === 'Ups, algo salió mal. Inténtalo más tarde'
+      const mensaje = resultado.tipoError === 'red' || resultado.tipoError === 'servidor'
+        ? 'Ups, algo salió mal. Inténtalo más tarde'
+        : resultado.mensaje === 'Ups, algo salió mal. Inténtalo más tarde'
         ? resultado.mensaje
-        : 'Usuario u contraseña incorrectas'
+        : 'Usuario o contraseña incorrectos'
       setErrores({ password: mensaje })
     }
   }

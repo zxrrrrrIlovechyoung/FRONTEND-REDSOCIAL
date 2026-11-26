@@ -1,5 +1,14 @@
 import httpClient from '../api/httpClient'
 
+const tipoDeError = (error) => {
+  if (!error.response && (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED' || error.request)) {
+    return 'red'
+  }
+
+  if (error.response?.status >= 500 || error.response?.status === 408) return 'servidor'
+  return 'negocio'
+}
+
 // Extrae el mensaje del backend (Resultado<T> o errores de validación de ASP.NET).
 const mensajeDeError = (error) => {
   const data = error.response?.data
@@ -14,18 +23,24 @@ const llamar = async (peticion) => {
     const { data } = await peticion()
     return data
   } catch (error) {
-    return { exito: false, mensaje: mensajeDeError(error), datos: error.response?.data?.datos, status: error.response?.status }
+    return {
+      exito: false,
+      mensaje: mensajeDeError(error),
+      datos: error.response?.data?.datos,
+      status: error.response?.status,
+      tipoError: tipoDeError(error),
+    }
   }
 }
 
 export const authService = {
-  login: (usuarioOEmail, password) => llamar(() => httpClient.post('/auth/login', { usuarioOEmail, password })),
-  reactivarCuenta: (usuarioOEmail, password) => llamar(() => httpClient.post('/auth/cuenta/reactivar', { usuarioOEmail, password })),
+  login: (usuarioOEmail, password) => llamar(() => httpClient.post('/auth/login', { usuarioOEmail, password }, { timeout: 12000 })),
+  reactivarCuenta: (usuarioOEmail, password) => llamar(() => httpClient.post('/auth/cuenta/reactivar', { usuarioOEmail, password }, { timeout: 12000 })),
   solicitarCodigoEmail: (email) => llamar(() => httpClient.post('/auth/registro/solicitar-codigo', { email })),
   verificarCodigoEmail: (email, codigo) => llamar(() => httpClient.post('/auth/registro/verificar-codigo', { email, codigo })),
   cancelarCodigoEmail: (email) => llamar(() => httpClient.post('/auth/registro/cancelar-codigo', { email })),
-  verificarEmailDisponible: (email) => llamar(() => httpClient.get('/auth/registro/email-disponible', { params: { email } })),
-  verificarUsuarioDisponible: (nombreUsuario) => llamar(() => httpClient.get(`/auth/registro/usuario-disponible/${encodeURIComponent(nombreUsuario)}`)),
+  verificarEmailDisponible: (email) => llamar(() => httpClient.get('/auth/registro/email-disponible', { params: { email }, timeout: 10000 })),
+  verificarUsuarioDisponible: (nombreUsuario) => llamar(() => httpClient.get(`/auth/registro/usuario-disponible/${encodeURIComponent(nombreUsuario)}`, { timeout: 10000 })),
   solicitarRecuperacionPassword: (email, confirmarReactivacion = false) => llamar(() => httpClient.post('/auth/recuperar-password/solicitar-codigo', { email, confirmarReactivacion })),
   verificarRecuperacionPassword: (email, codigo) => llamar(() => httpClient.post('/auth/recuperar-password/verificar-codigo', { email, codigo })),
   cambiarPassword: (email, recoveryToken, nuevaPassword) => llamar(() => httpClient.post('/auth/recuperar-password/cambiar', { email, recoveryToken, nuevaPassword })),

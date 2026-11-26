@@ -495,6 +495,8 @@ button { font: inherit; }
 .estado-usuario.invalido,
 .estado-email.ocupado,
 .estado-email.invalido { color: var(--danger); font-weight: 700; }
+.estado-usuario.error,
+.estado-email.error { color: var(--danger); font-weight: 700; }
 .estado-usuario.verificando,
 .estado-email.verificando { color: var(--muted); }
 
