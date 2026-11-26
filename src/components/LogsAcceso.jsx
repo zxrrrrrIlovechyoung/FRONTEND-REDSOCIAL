@@ -16,6 +16,7 @@ export default function LogsAcceso() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [actualizacion, setActualizacion] = useState(0)
+  const [logExpandido, setLogExpandido] = useState(null)
 
   useEffect(() => {
     let vigente = true
@@ -40,15 +41,48 @@ export default function LogsAcceso() {
   }, [pagina, q, estado, desde, hasta, actualizacion])
 
   const cambiar = (setter) => (e) => { setter(e.target.value); setPagina(1) }
+  const reactivaciones = datos.items.filter((item) => item.evento === 'reactivacion')
+  const iniciosSesion = datos.items.filter((item) => item.evento !== 'reactivacion')
+
+  const renderLogMobileCard = (item, compact = false) => {
+    const expandido = logExpandido === item.idLogAcceso
+    return (
+      <article className={`access-log-mobile-card${compact ? ' compacto' : ''}${expandido ? ' expandido' : ''}`} key={item.idLogAcceso}>
+        <button
+          className="access-log-mobile-summary"
+          type="button"
+          onClick={() => setLogExpandido((actual) => actual === item.idLogAcceso ? null : item.idLogAcceso)}
+          aria-expanded={expandido}
+        >
+          <span>
+            <strong>{item.identificador}</strong>
+            <small>{item.evento === 'reactivacion' ? 'Reactivación' : 'Inicio de sesión'}</small>
+          </span>
+          <span className={item.exitoso ? 'access-log-success' : 'access-log-failed'}>{item.exitoso ? 'Exitoso' : 'Fallido'}</span>
+          <i aria-hidden="true">{expandido ? '⌃' : '⌄'}</i>
+        </button>
+        {expandido && (
+          <div className="access-log-mobile-details">
+            <div><small>Fecha y hora</small><span>{fechaLocal(item.fechaUtc)}</span></div>
+            <div><small>Dirección IP</small><span>{item.direccionIp || 'No disponible'}</span></div>
+            {item.idUsuario != null && <div><small>ID de usuario</small><span>{item.idUsuario}</span></div>}
+          </div>
+        )}
+      </article>
+    )
+  }
+
   return (
     <section className="moderator-panel access-logs">
       <div className="profile-section-title">
         <h2>Logs de acceso</h2>
-        <button onClick={() => setActualizacion((v) => v + 1)} disabled={cargando}>Actualizar</button>
+        <button className="access-log-refresh" onClick={() => setActualizacion((v) => v + 1)} disabled={cargando}>
+          <span aria-hidden="true">↻</span> Actualizar registros
+        </button>
       </div>
       <p>Inicios de sesión y reactivaciones. Fecha y hora en tu zona local ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</p>
       <div className="access-log-filters">
-        <label>Usuario o IP<input className="admin-search" maxLength={100} value={q} onChange={cambiar(setQ)} placeholder="Buscar usuario, correo o IP" /></label>
+        <label className="access-log-filter-search">Usuario o IP<input className="admin-search" maxLength={100} value={q} onChange={cambiar(setQ)} placeholder="Buscar usuario, correo o IP" /></label>
         <label>Resultado<select value={estado} onChange={cambiar(setEstado)}><option value="">Todos</option><option value="true">Exitoso</option><option value="false">Fallido</option></select></label>
         <label>Desde<input type="datetime-local" value={desde} onChange={cambiar(setDesde)} /></label>
         <label>Hasta<input type="datetime-local" value={hasta} onChange={cambiar(setHasta)} /></label>
@@ -61,12 +95,27 @@ export default function LogsAcceso() {
           <table>
             <thead><tr><th>Usuario / identificador</th><th>Evento</th><th>Resultado</th><th>Fecha y hora</th><th>Dirección IP</th></tr></thead>
             <tbody>{datos.items.map((item) => <tr key={item.idLogAcceso}>
-              <td>{item.identificador}{item.idUsuario != null && <small> · ID {item.idUsuario}</small>}</td>
-              <td>{item.evento === 'reactivacion' ? 'Reactivación' : 'Inicio de sesión'}</td>
-              <td>{item.exitoso ? 'Exitoso' : 'Fallido'}</td>
-              <td>{fechaLocal(item.fechaUtc)}</td><td>{item.direccionIp || 'No disponible'}</td>
+              <td data-label="Identificador">{item.identificador}{item.idUsuario != null && <small> · ID {item.idUsuario}</small>}</td>
+              <td data-label="Evento">{item.evento === 'reactivacion' ? 'Reactivación' : 'Inicio de sesión'}</td>
+              <td data-label="Resultado">{item.exitoso ? 'Exitoso' : 'Fallido'}</td>
+              <td data-label="Fecha y hora">{fechaLocal(item.fechaUtc)}</td>
+              <td data-label="Dirección IP">{item.direccionIp || 'No disponible'}</td>
             </tr>)}</tbody>
           </table>
+        </div>
+        <div className="access-log-mobile-list">
+          <section className="access-log-mobile-zone access-log-primary-zone">
+            <div className="access-log-zone-title"><h3>Reactivaciones</h3><span>{reactivaciones.length}</span></div>
+            {reactivaciones.length > 0
+              ? reactivaciones.map((item) => renderLogMobileCard(item))
+              : <p className="access-log-zone-empty">Sin reactivaciones en este periodo.</p>}
+          </section>
+          <section className="access-log-mobile-zone access-log-login-zone">
+            <div className="access-log-zone-title"><h3>Inicios de sesión</h3><span>{iniciosSesion.length}</span></div>
+            {iniciosSesion.length > 0
+              ? iniciosSesion.map((item) => renderLogMobileCard(item, true))
+              : <p className="access-log-zone-empty">Sin inicios de sesión en este periodo.</p>}
+          </section>
         </div>
         {datos.items.length === 0 && <p>No hay accesos que coincidan con los filtros.</p>}
         <div className="moderation-pagination">

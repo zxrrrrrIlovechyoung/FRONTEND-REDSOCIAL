@@ -28,6 +28,10 @@ export default function SeleccionarEntrada() {
 
   const roles = usuario?.roles?.length ? usuario.roles : [usuario?.rol ?? 'usuario']
 
+  if (roles.length <= 1) {
+    return <Navigate to={rutaInicialPorRol(usuario?.rolActivo ?? usuario?.rol ?? roles[0])} replace />
+  }
+
   const elegirEntrada = (rol) => {
     seleccionarRolActivo(rol)
     navigate(rutaInicialPorRol(rol), { replace: true })

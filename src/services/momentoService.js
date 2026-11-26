@@ -22,6 +22,7 @@ export const momentoService = {
   misMomentos: ({ cursor, cantidad = 30 } = {}) => llamar(() => httpClient.get('/momentos/me', {
     params: { cursor, cantidad },
   })),
+  favoritos: () => llamar(() => httpClient.get('/momentos/favoritos')),
   momentosDeUsuario: (idUsuario, { cursor, cantidad = 30 } = {}) => llamar(() => httpClient.get(`/momentos/usuario/${idUsuario}`, {
     params: { cursor, cantidad },
   })),

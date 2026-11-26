@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
 import SuccessPop from '../components/SuccessPop'
+import UserTrustBadge from '../components/UserTrustBadge'
 import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
 import { authService } from '../services/authService'
@@ -38,6 +39,8 @@ const mapearMomento = (momento) => ({
   likes: momento.totalMeGusta ?? 0,
   comentarios: momento.totalComentarios ?? 0,
   leGusta: Boolean(momento.leGusta),
+  esVerificado: Boolean(momento.esVerificado),
+  esModerador: Boolean(momento.esModerador),
   tiempo: formatearFechaMomento(momento.fechaCreacion),
 })
 
@@ -337,7 +340,7 @@ export default function Perfil() {
                   <h1>{perfil?.nombrePerfil || nombre}</h1>
                   <Link className="settings-btn" to="/configuracion" aria-label="Configuracion del perfil">⚙</Link>
                 </div>
-                <span>{usuarioPerfil}</span>
+                <span className="profile-handle">{usuarioPerfil}<UserTrustBadge verified={perfil?.esVerificado} moderator={perfil?.esModerador} /></span>
               </div>
 
               <div className="profile-stats" aria-label="Estadisticas del perfil">

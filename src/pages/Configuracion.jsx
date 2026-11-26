@@ -244,6 +244,9 @@ export default function Configuracion() {
 
       <section className="settings-page" aria-label="Configuracion">
         <header className="settings-header">
+          <button className="settings-back-profile" type="button" onClick={() => navigate('/perfil')}>
+            ← Volver a mi perfil
+          </button>
           <p className="feed-kicker">Mi cuenta</p>
           <h1>Configuracion</h1>
           <span>Administra como se ve, se protege y se comporta tu experiencia en Moment.</span>
@@ -478,7 +481,7 @@ export default function Configuracion() {
           <section className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="cerrar-sesion-titulo">
             <h2 id="cerrar-sesion-titulo">Cerrar sesion</h2>
             <p>¿Seguro que quieres cerrar sesion en Moment?</p>
-            <div>
+            <div className="confirm-actions">
               <button className="profile-btn" onClick={() => setConfirmarSalida(false)}>Cancelar</button>
               <button className="danger-btn" onClick={cerrarSesion}>Si, cerrar sesion</button>
             </div>

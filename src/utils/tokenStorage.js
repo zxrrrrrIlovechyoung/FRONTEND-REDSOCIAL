@@ -49,7 +49,17 @@ const normalizarRoles = ({ roles, rol, role, nombreUsuario, email, token }) => {
 
 export const tokenStorage = {
   obtener: () => sessionStorage.getItem(TOKEN_KEY),
-  obtenerUsuario: () => JSON.parse(sessionStorage.getItem(USUARIO_KEY) ?? 'null'),
+  obtenerUsuario: () => {
+    const usuario = JSON.parse(sessionStorage.getItem(USUARIO_KEY) ?? 'null')
+    if (!usuario) return null
+
+    const token = sessionStorage.getItem(TOKEN_KEY)
+    const roles = normalizarRoles({ ...usuario, token })
+    const rol = usuario.rol ?? normalizarRol({ ...usuario, token })
+    const actualizado = { ...usuario, rol, roles }
+    sessionStorage.setItem(USUARIO_KEY, JSON.stringify(actualizado))
+    return actualizado
+  },
   guardar: ({ token, ...usuario }) => {
     const roles = normalizarRoles({ ...usuario, token })
     const usuarioConRol = { ...usuario, rol: normalizarRol({ ...usuario, token }), rolActivo: usuario.rolActivo ?? null, roles }
@@ -59,7 +69,13 @@ export const tokenStorage = {
   actualizarUsuario: (actualizacion) => {
     const usuario = JSON.parse(sessionStorage.getItem(USUARIO_KEY) ?? 'null')
     if (!usuario) return null
-    const actualizado = { ...usuario, ...actualizacion }
+    const token = sessionStorage.getItem(TOKEN_KEY)
+    const combinado = { ...usuario, ...actualizacion }
+    const actualizado = {
+      ...combinado,
+      rol: combinado.rol ?? normalizarRol({ ...combinado, token }),
+      roles: normalizarRoles({ ...combinado, token }),
+    }
     sessionStorage.setItem(USUARIO_KEY, JSON.stringify(actualizado))
     return actualizado
   },

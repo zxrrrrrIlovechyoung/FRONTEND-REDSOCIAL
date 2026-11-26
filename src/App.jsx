@@ -31,7 +31,6 @@ export default function App() {
           <Route path="/registro" element={<Registro />} />
           <Route path="/recuperar-password" element={<RecuperarPassword />} />
           <Route path="/cuenta-desactivada" element={<CuentaDesactivada />} />
-          <Route path="/seleccionar-entrada" element={<SeleccionarEntrada />} />
           <Route element={<RutaProtegida />}>
             <Route path="/inicio" element={<Inicio />} />
             <Route path="/perfil" element={<Perfil />} />
@@ -43,6 +42,7 @@ export default function App() {
             <Route path="/favoritos" element={<Favoritos />} />
             <Route path="/configuracion" element={<Configuracion />} />
             <Route path="/buscar" element={<Buscar />} />
+            <Route path="/seleccionar-entrada" element={<SeleccionarEntrada />} />
           </Route>
           <Route element={<RutaPorRol rolesPermitidos={['moderador', 'admin']} />}>
             <Route path="/moderador" element={<Moderador />} />

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
 import SuccessPop from '../components/SuccessPop'
+import UserTrustBadge from '../components/UserTrustBadge'
 import { momentoService } from '../services/momentoService'
 import { perfilService } from '../services/perfilService'
 import { reporteService } from '../services/reporteService'
@@ -47,6 +48,8 @@ const mapearMomento = (momento) => ({
   likes: momento.totalMeGusta ?? 0,
   comentarios: momento.totalComentarios ?? 0,
   leGusta: Boolean(momento.leGusta),
+  esVerificado: Boolean(momento.esVerificado),
+  esModerador: Boolean(momento.esModerador),
   tiempo: formatearFechaMomento(momento.fechaCreacion),
 })
 
@@ -262,7 +265,7 @@ export default function PerfilPublico() {
                     <div className="profile-name-line">
                       <h1>{perfil.nombrePerfil}</h1>
                     </div>
-                    <span>{usuario}</span>
+                    <span className="profile-handle">{usuario}<UserTrustBadge verified={perfil.esVerificado} moderator={perfil.esModerador} /></span>
                   </div>
 
                   <div className="public-profile-stats-row">
@@ -289,7 +292,22 @@ export default function PerfilPublico() {
                       >
                         {procesando ? <span className="spinner" aria-hidden="true" /> : perfil.siguiendo ? 'Siguiendo' : 'Seguir'}
                       </button>
-                      <button className="profile-btn public-message-btn">Mensaje</button>
+                      <button
+                        className="profile-btn public-message-btn"
+                        type="button"
+                        onClick={() => navigate('/mensajes', {
+                          state: {
+                            contacto: {
+                              idUsuario: perfil.idUsuario,
+                              nombre: perfil.nombrePerfil,
+                              usuario,
+                              fotoPerfilUrl: perfil.fotoPerfilUrl,
+                            },
+                          },
+                        })}
+                      >
+                        Mensaje
+                      </button>
                     </div>
                   </div>
 

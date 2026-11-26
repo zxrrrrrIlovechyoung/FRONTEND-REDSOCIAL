@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import AppSidebar from '../components/AppSidebar'
 import MessagesWidget from '../components/MessagesWidget'
 import SuccessPop from '../components/SuccessPop'
+import UserTrustBadge from '../components/UserTrustBadge'
 import { useAuth } from '../context/AuthContext'
 import { momentoService } from '../services/momentoService'
 import { reporteService } from '../services/reporteService'
@@ -44,6 +45,8 @@ const mapearMomento = (momento) => ({
   autor: momento.autor || 'Moment',
   usuario: momento.usuario || '@moment',
   avatar: momento.avatar || inicialesDe(momento.autor || momento.usuario),
+  esVerificado: Boolean(momento.esVerificado),
+  esModerador: Boolean(momento.esModerador),
   tiempo: formatearFechaMomento(momento.fechaCreacion),
   imagenes: obtenerImagenes(momento.archivoUrl),
   tipoAdjunto: momento.tipoAdjunto,
@@ -616,7 +619,7 @@ export default function Inicio() {
                       : <span>{post.avatar}</span>}
                   </div>
                   <div>
-                    <strong>{post.autor}</strong>
+                    <strong>{post.autor}<UserTrustBadge verified={post.esVerificado} moderator={post.esModerador} /></strong>
                     <span>{post.usuario} · {post.tiempo}</span>
                   </div>
                 </button>
@@ -756,7 +759,7 @@ export default function Inicio() {
                     : <span>{estadoAbierto.avatar}</span>}
                 </div>
                 <div>
-                  <strong>{estadoAbierto.autor}</strong>
+                  <strong>{estadoAbierto.autor}<UserTrustBadge verified={estadoAbierto.esVerificado} moderator={estadoAbierto.esModerador} /></strong>
                   <span>{estadoAbierto.usuario} · {estadoAbierto.tiempo}</span>
                 </div>
               </div>

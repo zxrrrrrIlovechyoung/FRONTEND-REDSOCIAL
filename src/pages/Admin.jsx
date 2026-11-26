@@ -4,6 +4,7 @@ import LogsAcceso from '../components/LogsAcceso'
 import SuccessPop from '../components/SuccessPop'
 import { useAuth } from '../context/AuthContext'
 import { adminService } from '../services/adminService'
+import { rutaInicialPorRol } from '../utils/rutasPorRol'
 
 const datosIniciales = {
   estadisticas: { totalUsuarios: 0, usuariosActivos: 0, nuevosMes: 0, loginsSemana: 0, publicaciones: 0, reportesAbiertos: 0 },
@@ -25,15 +26,20 @@ const formatearDiaCorto = (fecha) => {
 
 export default function Admin() {
   const navigate = useNavigate()
-  const { usuario, logout } = useAuth()
+  const { usuario, logout, seleccionarRolActivo } = useAuth()
   const [seccion, setSeccion] = useState('dashboard')
   const [dashboard, setDashboard] = useState(datosIniciales)
   const [usuarios, setUsuarios] = useState(usuariosIniciales)
   const [paginaUsuarios, setPaginaUsuarios] = useState(1)
   const [busqueda, setBusqueda] = useState('')
+  const [usuarioExpandido, setUsuarioExpandido] = useState(null)
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null)
   const [procesando, setProcesando] = useState(false)
   const [popExito, setPopExito] = useState('')
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false)
+  const [confirmarSalida, setConfirmarSalida] = useState(false)
+  const rolesDisponibles = Array.isArray(usuario?.roles) ? usuario.roles : []
+  const puedeCambiarModo = rolesDisponibles.length > 1
 
   useEffect(() => {
     adminService.dashboard().then((resultado) => {
@@ -86,6 +92,12 @@ export default function Admin() {
     navigate('/login', { replace: true })
   }
 
+  const cambiarModo = (rol) => {
+    seleccionarRolActivo(rol)
+    setMenuMovilAbierto(false)
+    navigate(rutaInicialPorRol(rol), { replace: true })
+  }
+
   return (
     <main className="moderator-shell">
       <aside className="moderator-sidebar">
@@ -119,13 +131,70 @@ export default function Admin() {
           <strong>{usuario?.nombreUsuario ?? 'admin'}</strong>
           <span>{usuario?.rolActivo ?? 'admin'}</span>
           <div className="moderator-role-actions">
-            <button onClick={() => navigate('/seleccionar-entrada')}>Cambiar rol</button>
+            {puedeCambiarModo && <button onClick={() => navigate('/seleccionar-entrada')}>Cambiar rol</button>}
             <button onClick={cerrarSesion}>Cerrar sesión</button>
           </div>
         </div>
       </aside>
 
-      <section className="moderator-page" aria-label="Panel administrador">
+      <header className="admin-mobile-topbar">
+        <button
+          className={`admin-mobile-menu-button${menuMovilAbierto ? ' abierto' : ''}`}
+          type="button"
+          aria-label={menuMovilAbierto ? 'Cerrar menú' : 'Abrir menú'}
+          aria-expanded={menuMovilAbierto}
+          onClick={() => setMenuMovilAbierto((actual) => !actual)}
+        >
+          <span /><span /><span />
+        </button>
+        <div className="admin-mobile-brand"><span className="brand-mark">M</span><strong>Moment</strong></div>
+        <span className="admin-mobile-role">Admin</span>
+      </header>
+
+      {menuMovilAbierto && (
+        <div className="admin-mobile-drawer-layer" role="presentation" onClick={() => setMenuMovilAbierto(false)}>
+          <aside className="admin-mobile-drawer" role="dialog" aria-label="Cambiar modo de usuario" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-mobile-drawer-head">
+              <div><span className="brand-mark">M</span><strong>Moment</strong></div>
+              <button type="button" onClick={() => setMenuMovilAbierto(false)} aria-label="Cerrar menú">×</button>
+            </div>
+            <p>Selecciona el modo de trabajo para esta sesión.</p>
+            {puedeCambiarModo && (
+              <div className="admin-mobile-role-list">
+                {rolesDisponibles.map((rol) => (
+                  <button className={rol === 'admin' ? 'activo' : ''} type="button" key={rol} onClick={() => cambiarModo(rol)}>
+                    <span>{rol === 'usuario' ? '⌂' : rol === 'moderador' ? '!' : '✦'}</span>
+                    <strong>{rol === 'usuario' ? 'Usuario' : rol === 'moderador' ? 'Moderador' : 'Administrador'}</strong>
+                    <small>{rol === 'admin' ? 'Modo actual' : 'Cambiar a este modo'}</small>
+                  </button>
+                ))}
+              </div>
+            )}
+            <button className="admin-mobile-logout" type="button" onClick={() => { setMenuMovilAbierto(false); setConfirmarSalida(true) }}>Cerrar sesión</button>
+          </aside>
+        </div>
+      )}
+
+      <nav className="admin-mobile-nav" aria-label="Navegación administrativa móvil">
+        <button className={seccion === 'dashboard' ? 'activo' : ''} onClick={() => setSeccion('dashboard')}>
+          <span aria-hidden="true">▦</span>
+          <strong>Inicio</strong>
+        </button>
+        <button className={seccion === 'usuarios' ? 'activo' : ''} onClick={() => setSeccion('usuarios')}>
+          <span aria-hidden="true">◎</span>
+          <strong>Usuarios</strong>
+        </button>
+        <button className={seccion === 'logs' ? 'activo' : ''} onClick={() => setSeccion('logs')}>
+          <span aria-hidden="true">≡</span>
+          <strong>Logs</strong>
+        </button>
+        <button className={seccion === 'reportes' ? 'activo' : ''} onClick={() => setSeccion('reportes')}>
+          <span aria-hidden="true">!</span>
+          <strong>Reportes</strong>
+        </button>
+      </nav>
+
+      <section className="moderator-page admin-page" aria-label="Panel administrador">
         {seccion === 'logs' && <LogsAcceso />}
         {seccion === 'dashboard' && (
           <>
@@ -194,18 +263,47 @@ export default function Admin() {
             />
 
             <div className="admin-user-list">
-              {usuarios.items.map((item) => (
-                <article className="admin-user-row" key={item.idUsuario} onClick={() => setUsuarioSeleccionado(item)}>
-                  <div>
-                    <strong>{item.nombre}</strong>
-                    <span>{item.usuario} · {item.email}</span>
-                  </div>
-                  <div>
-                    <small>{item.roles?.join(', ') || 'usuario'}</small>
-                    <span>{item.activo ? item.estadoCuenta : 'inactiva'}</span>
-                  </div>
-                </article>
-              ))}
+              {usuarios.items.map((item) => {
+                const expandido = usuarioExpandido === item.idUsuario
+                return (
+                  <article
+                    className={`admin-user-row${expandido ? ' expandido' : ''}`}
+                    key={item.idUsuario}
+                    onClick={() => setUsuarioExpandido((actual) => actual === item.idUsuario ? null : item.idUsuario)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setUsuarioExpandido((actual) => actual === item.idUsuario ? null : item.idUsuario)
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={expandido}
+                  >
+                    <div className="admin-user-summary">
+                      <strong>{item.nombre}</strong>
+                      <span>{item.usuario}</span>
+                    </div>
+                    <div className="admin-user-status">
+                      <span>{item.activo ? item.estadoCuenta : 'inactiva'}</span>
+                      <b aria-hidden="true">{expandido ? '⌃' : '⌄'}</b>
+                    </div>
+                    {expandido && (
+                      <div className="admin-user-details" onClick={(e) => e.stopPropagation()}>
+                        <div>
+                          <small>Correo</small>
+                          <span>{item.email}</span>
+                        </div>
+                        <div>
+                          <small>Roles</small>
+                          <span>{item.roles?.join(', ') || 'usuario'}</span>
+                        </div>
+                        <button type="button" onClick={() => setUsuarioSeleccionado(item)}>Gestionar usuario</button>
+                      </div>
+                    )}
+                  </article>
+                )
+              })}
             </div>
 
             <div className="moderation-pagination">
@@ -241,6 +339,19 @@ export default function Admin() {
               <button onClick={() => ejecutarAccion('admin')} disabled={procesando}>Asignar admin</button>
               <button onClick={() => ejecutarAccion('desactivar')} disabled={procesando}>Desactivar</button>
               <button className="danger-btn" onClick={() => ejecutarAccion('eliminar')} disabled={procesando}>Eliminar</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {confirmarSalida && (
+        <div className="modal-backdrop" role="presentation" onClick={() => setConfirmarSalida(false)}>
+          <section className="confirm-modal" role="dialog" aria-modal="true" aria-label="Cerrar sesión" onClick={(e) => e.stopPropagation()}>
+            <h2>Cerrar sesión</h2>
+            <p>¿Quieres salir de tu sesión de administrador?</p>
+            <div className="confirm-actions">
+              <button className="profile-btn" onClick={() => setConfirmarSalida(false)}>Cancelar</button>
+              <button className="profile-btn primary" onClick={cerrarSesion}>Cerrar sesión</button>
             </div>
           </section>
         </div>

@@ -112,7 +112,10 @@ export default function AppSidebar({ activo = 'Inicio' }) {
           <span />
           <span />
         </button>
-        <Link className="mobile-topbar-brand" to="/inicio">Moment</Link>
+        <Link className="mobile-topbar-brand" to="/inicio">
+          <span className="brand-mark">M</span>
+          <span>Moment</span>
+        </Link>
         <Link className="mobile-messages-link" to="/mensajes" aria-label="Abrir mensajes">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 6.5h16v11H4z" />
@@ -139,6 +142,18 @@ export default function AppSidebar({ activo = 'Inicio' }) {
               <Link className={activo === 'Favoritos' ? 'activo' : ''} to="/favoritos" onClick={() => setMenuMovilAbierto(false)}>♡ <span>Favoritos</span></Link>
               <Link className={activo === 'Configuracion' ? 'activo' : ''} to="/configuracion" onClick={() => setMenuMovilAbierto(false)}>⚙ <span>Configuración</span></Link>
               <Link to="/mensajes" onClick={() => setMenuMovilAbierto(false)}>✉ <span>Mensajes</span></Link>
+              {puedeCambiarRol && (
+                <button
+                  className="mobile-drawer-role-switch"
+                  type="button"
+                  onClick={() => {
+                    setMenuMovilAbierto(false)
+                    navigate('/seleccionar-entrada')
+                  }}
+                >
+                  ⇄ <span>Cambiar modo</span>
+                </button>
+              )}
             </nav>
           </aside>
         </div>

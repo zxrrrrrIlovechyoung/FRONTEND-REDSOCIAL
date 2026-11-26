@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import SuccessPop from '../components/SuccessPop'
 import { useAuth } from '../context/AuthContext'
 import { moderacionService } from '../services/moderacionService'
+import { rutaInicialPorRol } from '../utils/rutasPorRol'
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:5079/api').replace(/\/api\/?$/, '')
 
@@ -69,17 +70,19 @@ const formatearFechaReporte = (fecha) => {
 
 export default function Moderador() {
   const navigate = useNavigate()
-  const { usuario, perfilActual, logout } = useAuth()
+  const { usuario, perfilActual, logout, seleccionarRolActivo } = useAuth()
   const [dashboard, setDashboard] = useState(datosIniciales)
   const [cargando, setCargando] = useState(true)
   const [seccionActiva, setSeccionActiva] = useState('dashboard')
   const [vistaReportes, setVistaReportes] = useState('cuentas')
   const [paginas, setPaginas] = useState({ cuentas: 1, reportes: 1, observacion: 1 })
   const [accionPendiente, setAccionPendiente] = useState(null)
+  const [observacionExpandida, setObservacionExpandida] = useState(null)
   const [confirmarSalida, setConfirmarSalida] = useState(false)
   const [procesandoAccion, setProcesandoAccion] = useState(false)
   const [plantilla, setPlantilla] = useState(plantillasAdvertencia[0])
   const [popExito, setPopExito] = useState('')
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false)
 
   const cargarDashboard = async (paginasActuales = paginas) => {
     const resultado = await moderacionService.dashboard({
@@ -183,10 +186,18 @@ export default function Moderador() {
   const nombreUsuario = perfilActual?.nombreUsuario || usuario?.nombreUsuario || usuario?.usuario || nombrePerfil
   const fotoPerfilUrl = normalizarMediaUrl(perfilActual?.fotoPerfilUrl)
   const iniciales = nombrePerfil.replace('@', '').slice(0, 2).toUpperCase()
+  const rolesDisponibles = Array.isArray(usuario?.roles) ? usuario.roles : []
+  const puedeCambiarModo = rolesDisponibles.length > 1
 
   const cerrarSesion = () => {
     logout()
     navigate('/login', { replace: true })
+  }
+
+  const cambiarModo = (rol) => {
+    seleccionarRolActivo(rol)
+    setMenuMovilAbierto(false)
+    navigate(rutaInicialPorRol(rol), { replace: true })
   }
 
   return (
@@ -225,13 +236,60 @@ export default function Moderador() {
           </div>
 
           <div className="moderator-role-actions">
-            <button onClick={() => navigate('/seleccionar-entrada')}>Cambiar rol</button>
+            {puedeCambiarModo && <button onClick={() => navigate('/seleccionar-entrada')}>Cambiar rol</button>}
             <button onClick={() => setConfirmarSalida(true)}>Cerrar sesión</button>
           </div>
         </div>
       </aside>
 
-      <section className="moderator-page" aria-label="Panel de moderador">
+      <header className="admin-mobile-topbar">
+        <button
+          className={`admin-mobile-menu-button${menuMovilAbierto ? ' abierto' : ''}`}
+          type="button"
+          aria-label={menuMovilAbierto ? 'Cerrar menú' : 'Abrir menú'}
+          aria-expanded={menuMovilAbierto}
+          onClick={() => setMenuMovilAbierto((actual) => !actual)}
+        >
+          <span /><span /><span />
+        </button>
+        <div className="admin-mobile-brand"><span className="brand-mark">M</span><strong>Moment</strong></div>
+        <span className="admin-mobile-role">Moderador</span>
+      </header>
+
+      {menuMovilAbierto && (
+        <div className="admin-mobile-drawer-layer" role="presentation" onClick={() => setMenuMovilAbierto(false)}>
+          <aside className="admin-mobile-drawer" role="dialog" aria-label="Cambiar modo de usuario" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-mobile-drawer-head">
+              <div><span className="brand-mark">M</span><strong>Moment</strong></div>
+              <button type="button" onClick={() => setMenuMovilAbierto(false)} aria-label="Cerrar menú">×</button>
+            </div>
+            <p>Selecciona el modo de trabajo para esta sesión.</p>
+            {puedeCambiarModo && (
+              <div className="admin-mobile-role-list">
+                {rolesDisponibles.map((rol) => (
+                  <button className={rol === 'moderador' ? 'activo' : ''} type="button" key={rol} onClick={() => cambiarModo(rol)}>
+                    <span>{rol === 'usuario' ? '⌂' : rol === 'moderador' ? '!' : '✦'}</span>
+                    <strong>{rol === 'usuario' ? 'Usuario' : rol === 'moderador' ? 'Moderador' : 'Administrador'}</strong>
+                    <small>{rol === 'moderador' ? 'Modo actual' : 'Cambiar a este modo'}</small>
+                  </button>
+                ))}
+              </div>
+            )}
+            <button className="admin-mobile-logout" type="button" onClick={() => { setMenuMovilAbierto(false); setConfirmarSalida(true) }}>Cerrar sesión</button>
+          </aside>
+        </div>
+      )}
+
+      <nav className="admin-mobile-nav" aria-label="Navegación de moderación móvil">
+        {menuModerador.map((item) => (
+          <button className={seccionActiva === item.id ? 'activo' : ''} type="button" key={item.id} onClick={() => setSeccionActiva(item.id)}>
+            <span aria-hidden="true">{item.icono}</span>
+            <strong>{item.id === 'dashboard' ? 'Inicio' : item.texto}</strong>
+          </button>
+        ))}
+      </nav>
+
+      <section className="moderator-page moderator-dashboard-page" aria-label="Panel de moderador">
         {seccionActiva === 'dashboard' && (
           <>
             <div className="moderator-stats moderator-stats-first">
@@ -438,20 +496,35 @@ export default function Moderador() {
                     </article>
                   )}
 
-                  {dashboard.cuentasObservacion.items.map((cuenta) => (
-                    <article className="reported-card observation-card" key={cuenta.idUsuario}>
-                      <div>
-                        <strong>{cuenta.nombre}</strong>
-                        <span>{cuenta.usuario} · {cuenta.advertencias} advertencia{cuenta.advertencias === 1 ? '' : 's'}</span>
-                        <p>{cuenta.motivo}</p>
-                      </div>
-                      <div className="moderator-actions">
-                        <button onClick={() => abrirAccion('advertencia', cuenta)}>Nueva advertencia</button>
-                        <button onClick={() => abrirAccion('restringir', cuenta)}>Restringir</button>
-                        <button onClick={() => abrirAccion('desactivar', cuenta)}>Desactivar</button>
-                      </div>
+                  {dashboard.cuentasObservacion.items.map((cuenta) => {
+                    const expandida = observacionExpandida === cuenta.idUsuario
+                    return (
+                    <article className={`reported-card observation-card${expandida ? ' expandido' : ''}`} key={cuenta.idUsuario}>
+                      <button
+                        className="observation-summary"
+                        type="button"
+                        aria-expanded={expandida}
+                        onClick={() => setObservacionExpandida((actual) => actual === cuenta.idUsuario ? null : cuenta.idUsuario)}
+                      >
+                        <span>
+                          <strong>{cuenta.nombre}</strong>
+                          <small>{cuenta.usuario} · {cuenta.advertencias} advertencia{cuenta.advertencias === 1 ? '' : 's'}</small>
+                        </span>
+                        <i aria-hidden="true">{expandida ? '⌃' : '⌄'}</i>
+                      </button>
+                      {expandida && (
+                        <div className="observation-details">
+                          <p>{cuenta.motivo}</p>
+                          <div className="moderator-actions">
+                            <button onClick={() => abrirAccion('advertencia', cuenta)}>Nueva advertencia</button>
+                            <button onClick={() => abrirAccion('restringir', cuenta)}>Restringir</button>
+                            <button onClick={() => abrirAccion('desactivar', cuenta)}>Desactivar</button>
+                          </div>
+                        </div>
+                      )}
                     </article>
-                  ))}
+                    )
+                  })}
                 </div>
                 <div className="moderation-pagination">
                   <button onClick={() => cambiarPagina('observacion', -1)} disabled={dashboard.cuentasObservacion.pagina <= 1}>Anterior</button>
@@ -538,7 +611,7 @@ export default function Moderador() {
           <section className="confirm-modal" role="dialog" aria-modal="true" aria-label="Cerrar sesión" onClick={(e) => e.stopPropagation()}>
             <h2>Cerrar sesión</h2>
             <p>¿Quieres salir de tu sesión de moderador?</p>
-            <div>
+            <div className="confirm-actions">
               <button className="profile-btn" onClick={() => setConfirmarSalida(false)}>Cancelar</button>
               <button className="profile-btn primary" onClick={cerrarSesion}>Cerrar sesión</button>
             </div>
