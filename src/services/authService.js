@@ -1,4 +1,5 @@
 import httpClient from '../api/httpClient'
+import { csrf } from '../api/csrf'
 
 const tipoDeError = (error) => {
   if (!error.response && (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED' || error.request)) {
@@ -36,6 +37,13 @@ const llamar = async (peticion) => {
 export const authService = {
   login: (usuarioOEmail, password) => llamar(() => httpClient.post('/auth/login', { usuarioOEmail, password }, { timeout: 12000 })),
   reactivarCuenta: (usuarioOEmail, password) => llamar(() => httpClient.post('/auth/cuenta/reactivar', { usuarioOEmail, password }, { timeout: 12000 })),
+  logout: () => llamar(() => httpClient.post('/auth/logout')),
+  sesion: () => llamar(() => httpClient.get('/auth/sesion', { timeout: 10000 })),
+  csrf: async () => {
+    const resultado = await llamar(() => httpClient.get('/auth/csrf', { timeout: 10000 }))
+    if (resultado.exito && resultado.datos?.token) csrf.guardar(resultado.datos.token)
+    return resultado
+  },
   solicitarCodigoEmail: (email) => llamar(() => httpClient.post('/auth/registro/solicitar-codigo', { email })),
   verificarCodigoEmail: (email, codigo) => llamar(() => httpClient.post('/auth/registro/verificar-codigo', { email, codigo })),
   cancelarCodigoEmail: (email) => llamar(() => httpClient.post('/auth/registro/cancelar-codigo', { email })),

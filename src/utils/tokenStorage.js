@@ -66,6 +66,18 @@ export const tokenStorage = {
     sessionStorage.setItem(TOKEN_KEY, token)
     sessionStorage.setItem(USUARIO_KEY, JSON.stringify(usuarioConRol))
   },
+  guardarUsuario: (usuario) => {
+    sessionStorage.removeItem(TOKEN_KEY)
+    const roles = normalizarRoles({ ...usuario, token: null })
+    const usuarioConRol = {
+      ...usuario,
+      rol: normalizarRol({ ...usuario, token: null }),
+      rolActivo: usuario.rolActivo ?? null,
+      roles,
+    }
+    sessionStorage.setItem(USUARIO_KEY, JSON.stringify(usuarioConRol))
+    return usuarioConRol
+  },
   actualizarUsuario: (actualizacion) => {
     const usuario = JSON.parse(sessionStorage.getItem(USUARIO_KEY) ?? 'null')
     if (!usuario) return null

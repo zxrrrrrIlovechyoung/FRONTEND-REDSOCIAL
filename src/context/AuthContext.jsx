@@ -5,11 +5,15 @@ import { tokenStorage } from '../utils/tokenStorage'
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(tokenStorage.obtenerUsuario)
+  const [usuario, setUsuario] = useState(() => (
+    tokenStorage.obtener() ? tokenStorage.obtenerUsuario() : null
+  ))
   const [perfilActual, setPerfilActual] = useState(null)
+  const [restaurandoSesion, setRestaurandoSesion] = useState(() => !tokenStorage.obtener())
 
   const iniciarSesion = (datos) => {
-    tokenStorage.guardar(datos)
+    if (datos?.token) tokenStorage.guardar(datos)
+    else tokenStorage.guardarUsuario(datos)
     setUsuario(tokenStorage.obtenerUsuario())
   }
 
@@ -31,8 +35,28 @@ export function AuthProvider({ children }) {
     return resultado
   }, [])
 
+  useEffect(() => {
+    authService.csrf()
+
+    if (tokenStorage.obtener()) {
+      setRestaurandoSesion(false)
+      return undefined
+    }
+
+    let cancelado = false
+    authService.sesion().then((resultado) => {
+      if (cancelado) return
+      if (resultado.exito && resultado.datos) {
+        setUsuario(tokenStorage.guardarUsuario(resultado.datos))
+      }
+      setRestaurandoSesion(false)
+    })
+
+    return () => { cancelado = true }
+  }, [])
+
   const refrescarPerfil = useCallback(async () => {
-    if (!tokenStorage.obtener()) {
+    if (!usuario && !tokenStorage.obtener()) {
       setPerfilActual(null)
       return null
     }
@@ -44,7 +68,7 @@ export function AuthProvider({ children }) {
     }
 
     return null
-  }, [])
+  }, [usuario])
 
   useEffect(() => {
     if (usuario) refrescarPerfil()
@@ -78,10 +102,11 @@ export function AuthProvider({ children }) {
     tokenStorage.limpiar()
     setUsuario(null)
     setPerfilActual(null)
+    return authService.logout()
   }, [])
 
   return (
-    <AuthContext.Provider value={{ usuario, perfilActual, refrescarPerfil, estaAutenticado: !!usuario, login, reactivarCuenta, registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, verificarEmailDisponible, verificarUsuarioDisponible, solicitarRecuperacionPassword, verificarRecuperacionPassword, cambiarPassword, seleccionarRolActivo, logout }}>
+    <AuthContext.Provider value={{ usuario, perfilActual, restaurandoSesion, refrescarPerfil, estaAutenticado: !!usuario, login, reactivarCuenta, registrar, solicitarCodigoEmail, verificarCodigoEmail, cancelarCodigoEmail, verificarEmailDisponible, verificarUsuarioDisponible, solicitarRecuperacionPassword, verificarRecuperacionPassword, cambiarPassword, seleccionarRolActivo, logout }}>
       {children}
     </AuthContext.Provider>
   )

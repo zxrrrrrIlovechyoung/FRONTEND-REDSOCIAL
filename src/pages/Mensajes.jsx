@@ -4,7 +4,6 @@ import { useLocation } from 'react-router-dom'
 import AppSidebar from '../components/AppSidebar'
 import { useAuth } from '../context/AuthContext'
 import { chatService } from '../services/chatService'
-import { tokenStorage } from '../utils/tokenStorage'
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:5079/api').replace(/\/api\/?$/, '')
 
@@ -93,7 +92,7 @@ export default function Mensajes() {
 
   useEffect(() => {
     const connection = new HubConnectionBuilder()
-      .withUrl(`${apiBaseUrl}/hubs/chat`, { accessTokenFactory: () => tokenStorage.obtener() ?? '' })
+      .withUrl(`${apiBaseUrl}/hubs/chat`, { withCredentials: true })
       .withAutomaticReconnect()
       .configureLogging(LogLevel.None)
       .build()

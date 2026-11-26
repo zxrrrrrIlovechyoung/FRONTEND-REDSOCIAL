@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import CampoPassword from '../components/CampoPassword'
 import { necesitaSelectorDeEntrada, rutaInicialPorRol } from '../utils/rutasPorRol'
 
 const RECORDAR_USUARIO_KEY = 'moment_recordar_usuario'
+const COOKIE_CONSENT_KEY = 'moment_cookie_consent_v1'
 export const REACTIVAR_CUENTA_KEY = 'moment_reactivar_cuenta'
 const dominiosEmail = ['gmail.com', 'hotmail.com']
 const loginImagenes = [
@@ -36,6 +38,8 @@ export default function Login() {
   const [entrandoARegistro, setEntrandoARegistro] = useState(false)
   const [entrandoARecuperar, setEntrandoARecuperar] = useState(false)
   const [imagenActiva, setImagenActiva] = useState(() => Math.floor(Math.random() * loginImagenes.length))
+  const [cookiesAceptadas, setCookiesAceptadas] = useState(() => localStorage.getItem(COOKIE_CONSENT_KEY) === 'accepted')
+  const cookieButton = useRef(null)
 
   useEffect(() => {
     let timer
@@ -53,6 +57,18 @@ export default function Login() {
     programarCambio()
     return () => window.clearTimeout(timer)
   }, [])
+
+  useEffect(() => {
+    if (cookiesAceptadas) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    cookieButton.current?.focus()
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [cookiesAceptadas])
 
   if (estaAutenticado) {
     if (necesitaSelectorDeEntrada(usuario)) return <Navigate to="/seleccionar-entrada" replace />
@@ -83,6 +99,8 @@ export default function Login() {
 
   const onSubmit = async (e) => {
     e.preventDefault()
+    if (!cookiesAceptadas) return
+
     const nuevosErrores = {}
     if (!form.usuarioOEmail.trim()) nuevosErrores.usuarioOEmail = 'El correo es obligatorio'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.usuarioOEmail.trim())) nuevosErrores.usuarioOEmail = 'Ingresa un correo válido'
@@ -136,7 +154,10 @@ export default function Login() {
   }
 
   return (
-    <main className={`auth login-layout${entrandoARegistro ? ' auth-to-register' : ''}${entrandoARecuperar ? ' auth-to-recover' : ''}`}>
+    <main
+      className={`auth login-layout${entrandoARegistro ? ' auth-to-register' : ''}${entrandoARecuperar ? ' auth-to-recover' : ''}`}
+      inert={!cookiesAceptadas}
+    >
       <section className="login-visual" aria-hidden="true">
         <img key={loginImagenes[imagenActiva]} src={loginImagenes[imagenActiva]} alt="" />
         <div>
@@ -213,6 +234,41 @@ export default function Login() {
           </footer>
         </div>
       </section>
+      {!cookiesAceptadas && createPortal(
+        <div className="cookie-consent-backdrop">
+          <section
+            className="cookie-consent-notice"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cookie-consent-title"
+            aria-describedby="cookie-consent-description"
+            onKeyDown={(event) => {
+              if (event.key === 'Tab') {
+                event.preventDefault()
+                cookieButton.current?.focus()
+              }
+            }}
+          >
+            <div>
+              <h2 id="cookie-consent-title">Cookies esenciales</h2>
+              <p id="cookie-consent-description">
+                Para iniciar sesión necesitas aceptar las cookies esenciales. Nos permiten mantener tu sesión y proteger el acceso a tu cuenta. No utilizamos cookies publicitarias ni de analítica.
+              </p>
+            </div>
+            <button
+              ref={cookieButton}
+              type="button"
+              onClick={() => {
+                localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted')
+                setCookiesAceptadas(true)
+              }}
+            >
+              Aceptar y continuar
+            </button>
+          </section>
+        </div>,
+        document.body,
+      )}
     </main>
   )
 }
